@@ -65,6 +65,8 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 				$prevScol = $this->prevScol($phpcsFile, $i);
 				$iPscol   = $this->getWhitespaces($phpcsFile, $prevScol);
 
+				$prevEcol = $this->prevEcol($phpcsFile, $i);
+
 				// può cambiare in casi specifici:
 				if ($this->isCloseBracket($phpcsFile, $i)) {
 					// se è una parentesi di chiusura multiline, la indento
@@ -99,6 +101,7 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 				} elseif (
 					$this->isObjectOperator($phpcsFile, $i)
 					&& !$this->isObjectOperator($phpcsFile, $prevScol)
+					&& !$this->isCloseBracket($phpcsFile, $prevEcol)
 				) {
 					// se è un operatore di chaining e il PSCOL non lo è,
 					// allora lo indento di 1 tab in più
@@ -106,6 +109,7 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 				} elseif (
 					$this->isConcatOperator($phpcsFile, $i)
 					&& !$this->isConcatOperator($phpcsFile, $prevScol)
+					&& !$this->isString($phpcsFile, $prevScol)
 				) {
 					// se è un operatore di concatenazione di stringa
 					// e il PSCOL non lo è, allora lo indento di 1 tab in più
@@ -124,7 +128,6 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 				} else {
 					// se non è uno dei casi precedenti, allora:
 					// prendo il PECOL: prev-end-code-of-line
-					$prevEcol = $this->prevEcol($phpcsFile, $i);
 					if (
 						$this->isBlockOpener($phpcsFile, $prevEcol)
 						|| $this->isColon($phpcsFile, $prevEcol)

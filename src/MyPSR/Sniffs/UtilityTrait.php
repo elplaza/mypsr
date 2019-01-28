@@ -402,6 +402,18 @@ trait UtilityTrait
 	}
 
 	/**
+	 * E' una stringa?
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return boolean
+	 */
+	public function isString(File $phpcsFile, $ptr = null)
+	{
+		return $this->isType($phpcsFile, Tokens::$stringTokens, $ptr);
+	}
+
+	/**
 	 * E' il punto e virgola?
 	 *
 	 * @param  File     $phpcsFile

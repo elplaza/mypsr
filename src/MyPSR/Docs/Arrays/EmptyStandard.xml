@@ -1,0 +1,19 @@
+<documentation title="Empty Arrays">
+    <standard>
+    <![CDATA[
+    <em>Arrays</em> with no valid code must have close brackets.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: empty array">
+        <![CDATA[
+$array = array(<em></em>);
+        ]]>
+        </code>
+        <code title="Invalid: whitespaces or comments inside">
+        <![CDATA[
+$array = array(<em>    </em><em>/* comment */</em>);
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

@@ -1,0 +1,81 @@
+<?php
+
+function ciao($arg){
+	echo 'ciao';
+
+	function pluto($arg){
+		echo 'ciao';
+	};
+}
+
+class Gianni{
+	public function giacomo($value)
+	{
+		function pippo($arg){
+			echo 'ciao';
+		};
+		echo $value;
+	}
+
+	public function a($a)
+	{
+		echo 'a';
+	}
+
+	protected function b($b)
+	{
+		echo 'b';
+	}
+
+	private function c($c)
+	{
+		echo 'c';
+	}
+
+	static public function s($s)
+	{
+		echo 's';
+	}
+
+	final public function f($f)
+	{
+		echo 'f';
+	}
+
+	abstract public function abs($abs);
+
+}
+
+abstract class Giannino{
+	public function abstgiacomo($value)
+	{
+		function pippo($arg){
+			echo 'ciao';
+		};
+		echo $value;
+	}
+
+}
+
+trait Gianna{
+	public function giacomo($value)
+	{
+
+		$a = function($arg) {
+			return $arg * 2;
+		};
+
+		function pippo($arg){
+			echo 'ciao';
+		};
+		echo $value;
+	}
+
+}
+
+$util->setLogger(new class {
+	public function log($msg)
+	{
+		echo $msg;
+	}
+});

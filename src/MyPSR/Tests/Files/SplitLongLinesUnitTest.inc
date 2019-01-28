@@ -1,0 +1,32 @@
+<?php
+
+  #	   @return Ciao nsodnfasdp pahsdfp ashdpf ahsdhfas dfòahs dfalò sdfla shdfalsdhufla sdhnc .as cnjòasd jc.asdhc ashdcashld cahs
+
+
+
+	     /*wlehylwerhywlerhywerwuiehyrlwieuhrlwehrlwiherlwherliwherliwherlwherhlwerhwlehrlwuiehrlwiuehrlwiehrlwuiehrlwuierhwehrlwehrlwherlwherilwehrliwher
+		   @return Ciao nsodnfasdp pahsdfp ashdpf ahsdhfas dfòahs dfalò sdfla shdfalsdhufla sdhnc .as cnjòasd jc.asdhc ashdcashld cahs
+		   sdfashò fhasldfhasldhfashdflòasduiohflauisdghflasdgufagn oòfh as.dhfò asdhifj asòodhfja fuafhyadn òasdjfk asdjkfmasdfoaò
+		  */
+
+      //sdlhfalsdfhashdf lasdhf lh sdfh .h. h sdfh .h sdf ashd f.h .sdhf.ash df.sdgha,lsdhgf lgh,hsd f,hs f,h .h h sdf.uh as.dhf .h.
+
+	if ($veryLongCondition == true || $veryLongCondition == true || $veryVeryVeryLongCondition == $veryLongValue) { // ciso ao os
+		doSomething();
+	}
+
+if ($this->chaining->shouldNot->split || $this->chaining->should->survive || $this->should->survive->too) { #ghas kldgfk kghsdk ask gdkg ,jgjhgf,jb bm,hgdh ,jhgh,asjkdhaSDH LKHK. ASDAjsdllhj. kah,jhgsdfags,dfgh, lsdghas,dfasgh dfgh,kh,kjsdh,f asgdf
+	doMore();
+}
+
+		if ($this->chaining->should->be->split->after->the->second->pass->chaining->should->be->split->after->the->second->pass || $this->chaining->should->be->split->after->the->second->pass->chaining->should->be->split->after->the->second->pass) { /* kldfjh */ 	 /*lsdkfhasldh asdf */  #comment
+			doMore();
+		}
+
+  if ($this->doCall(array("asdasd", "asdasdasd", "asdasdasdasd", "asdasdasdasd", doMoreCalls("asdasd", "asdasdasd"))) || doStuff("asdasd", "asdasd")) {
+
+}
+
+     $this->file->asdd->asdasd = RepositoryGet::asdasdasdas()->getAsdasd()->asdasdasdasd()->asdasdasdasd()->asdasdasdasdasd()->asdasdasdasdasd()->asdasdasdasdasd(); 	 // lòh adsh hk.hls. dfh. h.sukshydf .ahsdfh a.sdilfhj ohjs
+
+$this->file->asdd->asdasd = RepositoryGet::asdasdasdas()->getAsdasd()->asdasdasdasd()->asdasdasdasd()->asdasdasdasdasd();

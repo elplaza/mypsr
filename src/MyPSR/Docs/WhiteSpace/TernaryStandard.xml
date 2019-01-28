@@ -1,0 +1,19 @@
+<documentation title="Ternary Operator Indentation">
+    <standard>
+    <![CDATA[
+    Single line ternary operator must have one space around.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: one space around">
+        <![CDATA[
+$string = ($isMale)<em> </em>?<em> </em>"Mr"<em> </em>:<em> </em>"Mrs";
+        ]]>
+        </code>
+        <code title="Invalid: no one space around">
+        <![CDATA[
+$string = ($isMale)<em></em>?<em></em>"Mr"<em></em>:<em></em>"Mrs";
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

@@ -1,0 +1,29 @@
+<documentation title="Methods Visibility">
+    <standard>
+    <![CDATA[
+    Methods must have explicited visibility.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: explicit method visibility">
+        <![CDATA[
+class Test {
+    <em>public</em> function do()
+    {
+
+    }
+}
+        ]]>
+        </code>
+        <code title="Invalid: implicit method visibility">
+        <![CDATA[
+class Test {
+    <em></em>function do()
+    {
+
+    }
+}
+        ]]>
+        </code>
+    </code_comparison>    
+</documentation>

@@ -1,0 +1,29 @@
+<documentation title="Clean Empty Lines">
+    <standard>
+    <![CDATA[
+    Empty lines should not exists inside parenthesis.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: no empty lines">
+        <![CDATA[
+if (
+    $a === $b
+) {
+    return true;
+}
+        ]]>
+        </code>
+        <code title="Invalid: empty lines inside parenthesis">
+        <![CDATA[
+if (
+<em></em>
+    $a === $b
+<em></em>
+) {
+    return true;
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

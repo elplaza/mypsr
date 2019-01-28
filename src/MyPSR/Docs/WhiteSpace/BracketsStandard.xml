@@ -1,0 +1,40 @@
+<documentation title="Brackets single-line and multi-line">
+    <standard>
+    <![CDATA[
+    Single line brackets must not have spaces before brackets and code.
+    Multi line brackets must have newline after opener and the closer must be
+    a start-code-of-line.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: no space in single-line">
+        <![CDATA[
+if (<em></em>$a == true<em></em>) {
+    return true;
+}
+        ]]>
+        </code>
+        <code title="Invalid: one space in single-line">
+        <![CDATA[
+if (<em> </em>$a == true<em> </em>) {
+    return true;
+}
+        ]]>
+        </code>
+    </code_comparison>
+    <code_comparison>
+        <code title="Valid: newline in multi-line">
+        <![CDATA[
+if ($a == true) {<em>
+</em>return true;
+<em>}</em>
+        ]]>
+        </code>
+        <code title="Invalid: one space in multi-line">
+        <![CDATA[
+if ($a == true) {<em></em>return true
+;<em>}</em>
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit colors="true" bootstrap="./vendor/squizlabs/php_codesniffer/tests/bootstrap.php">
+    <filter>
+        <whitelist>
+            <directory suffix=".php">./src</directory>
+        </whitelist>
+    </filter>
+    <testsuites>
+        <testsuite name="MyPSR">
+            <directory suffix="Test.php">./src/MyPSR/Tests</directory>
+        </testsuite>
+    </testsuites>
+
+</phpunit>

@@ -1,0 +1,19 @@
+<?php echo "test1" ?>
+
+<?= "test2" ?>
+
+<?= "test3" ?>
+
+<?php if (true): ?>
+<?= "test4" ?>
+<?php endif ?>
+
+<?php if (false): ?>
+<?= "test5" ?>
+<?php else: ?>
+<?= "test6" ?>
+<?php endif ?>
+
+<?php foreach (array("a", "b", "c") as $item): ?>
+<?= $item ?>
+<?php endforeach ?>

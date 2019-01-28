@@ -1,0 +1,42 @@
+<documentation title="Semicolon Indentation">
+    <standard>
+    <![CDATA[
+    In single line statement, semicolon must follow the last valid code.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: no space">
+        <![CDATA[
+$string = (5 + 3) - 7<em></em>;
+        ]]>
+        </code>
+        <code title="Invalid: no one space around">
+        <![CDATA[
+$string = (5 + 3) - 7<em>     </em>;
+        ]]>
+        </code>
+    </code_comparison>
+    <standard>
+    <![CDATA[
+    In multi line statement, semicolon must be indented to the same level of the statement start.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: same indentation">
+        <![CDATA[
+$thing = $this
+    ->getField()
+    ->withCondition()
+<em></em>;
+        ]]>
+        </code>
+        <code title="Invalid: no one space around">
+        <![CDATA[
+$thing = $this
+    ->getField()
+    ->withCondition()
+<em>      </em>;
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

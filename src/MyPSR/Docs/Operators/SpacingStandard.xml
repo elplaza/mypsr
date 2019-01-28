@@ -1,0 +1,36 @@
+<documentation title="Operators Spacing">
+    <standard>
+    <![CDATA[
+    Operators must be followed by one and only one space.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: one space after">
+        <![CDATA[
+$one =<em> </em>(3 +<em> </em>5) -<em> </em>7;
+        ]]>
+        </code>
+        <code title="Invalid: no one or more spaces after">
+        <![CDATA[
+$one =<em>     </em>(3+<em></em>5)-<em>      </em>7;
+        ]]>
+        </code>
+    </code_comparison>
+    <standard>
+    <![CDATA[
+    Operators (assignment excluded) must have one and only one space before.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: one space before">
+        <![CDATA[
+$one = (3<em> </em>+ 5)<em> </em>- 7;
+        ]]>
+        </code>
+        <code title="Invalid: no one or more spaces before">
+        <![CDATA[
+$one = (3<em>    </em>+ 5)<em></em>- 7;
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

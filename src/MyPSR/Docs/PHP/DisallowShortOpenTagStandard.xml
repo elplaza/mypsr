@@ -1,0 +1,36 @@
+<documentation title="Disallow Short Open Tag">
+    <standard>
+    <![CDATA[
+    Open tag must be <em><?php</em> and not <em><?</em>.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: opening tag">
+        <![CDATA[
+<em><?php </em>dosthuff();
+        ]]>
+        </code>
+        <code title="Invalid: short opening tag">
+        <![CDATA[
+<em><? </em>dosthuff();
+        ]]>
+        </code>
+    </code_comparison>    
+    <standard>
+    <![CDATA[
+    Echo tag must be <em><?=</em> and not <em><? echo</em>.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: echo tag">
+        <![CDATA[
+<em><?= </em>"hello world";
+        ]]>
+        </code>
+        <code title="Invalid: short opening tag">
+        <![CDATA[
+<em><? echo </em>"hello world";
+        ]]>
+        </code>
+    </code_comparison>    
+</documentation>

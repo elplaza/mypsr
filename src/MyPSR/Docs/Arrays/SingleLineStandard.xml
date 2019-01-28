@@ -1,0 +1,70 @@
+<documentation title="Array Single Line Declarations">
+    <standard>
+    <![CDATA[
+    Code must start immediately after the <em>opening parenthesis</em>.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: code starts immediately after opening parenthesis">
+        <![CDATA[
+$array = array(<em></em>"value1", "value2");
+        ]]>
+        </code>
+        <code title="Invalid: space after opening parenthesis">
+        <![CDATA[
+$array = array(<em> </em>"value1","value2");
+        ]]>
+        </code>
+    </code_comparison>
+    <standard>
+    <![CDATA[
+    <em>Closing parenthesis</em> mush be immediately after last valid code.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: last code was immediately followed by closing parenthesis">
+        <![CDATA[
+$array = array("value1", "value2"<em></em>);
+        ]]>
+        </code>
+        <code title="Invalid: space before closing parenthesis">
+        <![CDATA[
+$array = array("value1","value2"<em>  </em>);
+        ]]>
+        </code>
+    </code_comparison>
+    <standard>
+    <![CDATA[
+    The <em>comma</em> must be immediately after the array element and must have one (and only one) space after.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: comma immediately after element and one space after">
+        <![CDATA[
+$array = array("value1"<em></em>,<em> </em>"value2");
+        ]]>
+        </code>
+        <code title="Invalid: space before comma and no space after comma">
+        <![CDATA[
+$array = array("value1"<em> </em>,<em></em>"value2");
+        ]]>
+        </code>
+    </code_comparison>
+    <standard>
+    <![CDATA[
+    <em>Double arrows</em> must have one (and only one) space before and after.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: space around double arrow">
+        <![CDATA[
+$array = array("key1"<em> </em>=><em> </em>"value1");
+        ]]>
+        </code>
+        <code title="Invalid: no space around double arrow">
+        <![CDATA[
+$array = array("key1"<em></em>=><em></em>"value1");
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

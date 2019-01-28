@@ -1,0 +1,50 @@
+<documentation title="Indentation">
+    <standard>
+    <![CDATA[
+    Multiline brackets, case and default keywords, multiline chaining, etc... must be indented of 1 tab.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: one tab indentation">
+        <![CDATA[
+if ($a == true) {
+<em>    </em>return true;
+}
+        ]]>
+        </code>
+        <code title="Invalid: no one tab indentation">
+        <![CDATA[
+if ($a == true) {
+<em> </em>return true;
+}
+        ]]>
+        </code>
+    </code_comparison>
+    <code_comparison>
+        <code title="Valid: one tab indentation after case and default">
+        <![CDATA[
+switch ($a) {
+    case "a":
+<em>    </em>return true;
+    case "b":
+<em>    </em>return false;
+    default:
+<em>    </em>return 1;
+}
+
+        ]]>
+        </code>
+        <code title="Invalid: one space in multi-line">
+        <![CDATA[
+switch ($a) {
+    case "a":
+<em> </em>return true;
+    case "b":
+<em>              </em>return false;
+    default:
+<em></em>return 1;
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

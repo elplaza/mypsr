@@ -1,0 +1,19 @@
+<documentation title="Double Quotes Strings">
+    <standard>
+    <![CDATA[
+    Strings must be defined with double quotes and not with sigle quotes.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: double quotes string">
+        <![CDATA[
+$string = <em>"</em>well defined string<em>"</em>;
+        ]]>
+        </code>
+        <code title="Invalid: single quotes string">
+        <![CDATA[
+$string = <em>'</em>bad defined string<em>'</em>;
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

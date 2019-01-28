@@ -1,0 +1,30 @@
+<documentation title="Control Structures Spacing">
+    <standard>
+    <![CDATA[
+    All control structures keywords must have one space distance with brackets.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: one space distance.">
+        <![CDATA[
+switch<em> </em>($value)<em> </em>{
+    case<em> </em>'value1':<em>
+</em>case 'value2':
+        break;
+    default<em></em>:
+        break;
+}
+        ]]>
+        </code>
+        <code title="Invalid: more or no spaces distance.">
+        <![CDATA[
+switch<em></em>($value)<em>         </em>{
+    case<em>      </em>'value1':<em></em>case 'value2':
+        break;
+    default<em>         </em>:
+        break;
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

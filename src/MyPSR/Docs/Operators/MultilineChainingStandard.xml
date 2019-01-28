@@ -1,0 +1,25 @@
+<documentation title="Multiline Chaining">
+    <standard>
+    <![CDATA[
+    In multiline chaining, operator must be first of line.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: first of line">
+        <![CDATA[
+$object = $this
+<em>-></em>getField()
+<em>-></em>getValue()
+;
+        ]]>
+        </code>
+        <code title="Invalid: no first of line">
+        <![CDATA[
+$object = $this<em>-></em>
+   getField()<em>-></em>
+   getValue()
+;
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

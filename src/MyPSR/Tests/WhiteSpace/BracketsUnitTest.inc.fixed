@@ -1,0 +1,163 @@
+<?php
+
+if($a == $b) {
+	echo "something";
+}
+
+if/**/($a == $b) {
+	echo "something";
+}
+
+if               ($a == $b) {
+	echo "something";
+}
+
+if
+($a == $b) {
+	echo "something";
+}
+
+if($a == $b) {
+	echo "something";
+} elseif($a && $b) {
+	echo "Other stuff";
+	$more = "stuff";
+}
+
+while(true) {
+	//do something
+}
+
+while      ($cond == true) {
+	$test = true;
+}
+
+for      ($i=0; $i < 0; $i++){
+	$test = null;
+}
+
+for($i=0; $i < 0; $i++)    {
+	$test = null;
+}
+
+foreach      ($variable as $key => $value){
+	echo $key;
+}
+
+foreach($variable as $key => $value)    {
+	echo $value;
+}
+
+if($cond){
+	asd();
+}
+elseif($cond)
+{
+	asd();
+}
+else {
+	asd();
+}
+
+if ($cond) {
+	asd();
+}
+else
+{
+	asd();
+}
+
+if ($cond) {
+	asd();
+}
+else{
+	asd();
+}
+
+if($cond){
+	asd();
+}elseif($cond2){
+	asd();
+}else{
+	asd();
+}
+
+if ($cond){
+	asd();
+}else if($cond) {
+	asd();
+}
+
+if($cond) {
+	if($cond) {
+		asd();
+	}
+	else
+	{
+		asd();
+	}
+}
+
+do {
+	asd();
+	asd();
+} while($asd);
+
+if($a == $b) {
+	echo "something";
+}
+
+if($a == $b) {
+	echo "something";
+}
+
+if($a == $b) {
+	echo "something";
+}
+
+if(
+        $a == $b
+	&& $a > $c    
+) {
+	echo "something";
+}
+
+if(
+$a == $b
+) {
+	echo "something";
+}
+
+if(
+$a == $b
+	) {
+	echo "something";
+}
+
+	if(
+$a == $b
+) {
+		echo "something";
+	}
+
+if ($cond) {
+	if (
+$cond == true
+	) {
+		doSomething();
+	}
+
+	if (
+			$cond == true
+	) {
+		doSomething();
+	}
+}
+
+try{
+    echo inverse(5) . "\n";
+    echo inverse(0) . "\n";
+}catch     (Exception $e){
+    echo 'Caught exception: ',  $e->getMessage(), "\n";
+}
+    

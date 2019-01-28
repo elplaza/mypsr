@@ -1,0 +1,40 @@
+<documentation title="Multiline Operators Statements">
+    <standard>
+    <![CDATA[
+    Operators, in multiline statement, must be first of line.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: first of line">
+        <![CDATA[
+$one = (3 + 5)<em></em>
+<em>-</em> 7;
+
+$object = $this<em></em>
+<em>-></em>getField()
+<em>-></em>getValue()
+;
+
+$string = "one of my favourites"<em></em>
+<em>.</em> " metal band"
+<em>.</em> " is Metallica"
+; 
+        ]]>
+        </code>
+        <code title="Invalid: no first of line">
+        <![CDATA[
+$one = (3 + 5) <em>-</em>
+<em> </em>7;
+
+$object = $this<em>-></em>
+   getField()<em>-></em>
+   getValue()
+;
+
+$string = "one of my favourites" <em>.</em>
+<em></em>" metal band"<em>.</em> " is Metallica"
+; 
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

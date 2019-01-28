@@ -1,0 +1,32 @@
+<documentation title="Array Naming">
+    <standard>
+    <![CDATA[
+    The <em>array</em> keyword must be lowercase and open parenthesis
+    must be immediately after the array keyword.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: array keyword lowercase">
+        <![CDATA[
+$array = <em>a</em>rray("value1", "value2");
+        ]]>
+        </code>
+        <code title="Invalid: first letter capitalised">
+        <![CDATA[
+$array = <em>A</em>rray("value1", "value2");
+        ]]>
+        </code>
+    </code_comparison>
+    <code_comparison>
+        <code title="Valid: array open parenthesis">
+        <![CDATA[
+$array = array<em></em>("value1", "value2");
+        ]]>
+        </code>
+        <code title="Invalid: space between array keyword and open parenthesis">
+        <![CDATA[
+$array = array<em> </em>("value1", "value2");
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

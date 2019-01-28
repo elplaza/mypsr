@@ -1,0 +1,33 @@
+<documentation title="Control Structures Naming">
+    <standard>
+    <![CDATA[
+    All <em>control structures keywords</em> must be lowercase.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: switch keyword lowercase">
+        <![CDATA[
+<em>s</em>witch("value"){
+    ca<em>s</em>e 1;
+        echo "do";
+        bre<em>a</em>k;
+    defaul<em>t</em>:
+        echo "nothing";
+        break;
+}
+        ]]>
+        </code>
+        <code title="Invalid: keywords not lowercase">
+        <![CDATA[
+<em>S</em>witch("value"){
+    ca<em>S</em>e 1;
+        echo "do";
+        bre<em>A</em>k;
+    defaul<em>T</em>:
+        echo "nothing";
+        break;
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

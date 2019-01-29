@@ -110,6 +110,9 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 					// se è un operatore di concatenazione di stringa
 					// e il PSCOL non lo è, allora lo indento di 1 tab in più
 					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
+				} elseif ($this->isTernary($phpcsFile, $i)) {
+					// se è l'operatore ternario
+					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
 				} elseif ($this->isSemicolon($phpcsFile, $i)) {
 					// se è un ";" devo andarmi a prendere lo start-of-statement
 					// e indentarla come il SCOL dello SOS

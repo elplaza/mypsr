@@ -280,6 +280,15 @@ trait UtilityTrait
 	}
 
 	/**
+	 * Dammi i token dell'operatore ternario
+	 * @return array
+	 */
+	public function getTernary()
+	{
+		return array(T_INLINE_THEN);
+	}
+
+	/**
 	 * Dammi tutte le strutture di controllo
 	 * @return array
 	 */
@@ -565,6 +574,18 @@ trait UtilityTrait
 	public function isArithmeticOperator(File $phpcsFile, $ptr = null)
 	{
 		return $this->isType($phpcsFile, $this->getArithmeticOperators(), $ptr);
+	}
+
+	/**
+	 * E' un token di tipo operatore ternario?
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return boolean
+	 */
+	public function isTernary(File $phpcsFile, $ptr = null)
+	{
+		return $this->isType($phpcsFile, $this->getTernary(), $ptr);
 	}
 
 	/**

@@ -13,7 +13,7 @@ class TernarySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function register()
 	{
-		return array(T_INLINE_THEN);
+		return $this->getTernary();
 	}
 
 	public function process(File $phpcsFile, $stackPtr)

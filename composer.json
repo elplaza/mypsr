@@ -17,6 +17,7 @@
     },
     "require": {
         "php"                      : ">=7.2",
+        "ext-xml"                  : "*",
         "squizlabs/php_codesniffer": "@stable",
         "phpmd/phpmd"              : "@stable",
         "friendsofphp/php-cs-fixer": "@stable"

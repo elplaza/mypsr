@@ -12,7 +12,7 @@ p.s. per aggiornare i pacchetti installati globalmente lanciare: `composer globa
 Una volta installati i tools, questi, come lo standard da usare, vanno comunicati al plugin tramite il file di configurazione (Preferences --> Package Settings --> PHP Code Sniffer --> Settings User), per es.:
 ```
 {
-	"show_debug"                  : true,
+	"show_debug"                  : false,
 	"phpcs_executable_path"       : "~/.composer/vendor/bin/phpcs",
 	"phpcbf_executable_path"      : "~/.composer/vendor/bin/phpcbf",
 	"php_cs_fixer_executable_path": "~/.composer/vendor/bin/php-cs-fixer",
@@ -31,6 +31,8 @@ Una volta installati i tools, questi, come lo standard da usare, vanno comunicat
     }
 }
 ```
+
+:beetle: tip: se il plugin non sembra funzionare, abilitare il `show_debug` e aprire la console di Sublime.
 
 ### Lanciare i test
 Per lanciare i test del MyPSR basta:

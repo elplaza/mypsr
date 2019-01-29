@@ -1199,13 +1199,32 @@ trait UtilityTrait
 	/**********************************************/
 
 	/**
+	 * è il primo operatore di chaining?
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return boolean
+	 */
+	public function isFirstChaining(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			$prev = $this->prevChain($phpcsFile, $ptr);
+			if (is_null($prev)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * dammi il token che apre l'intero chaining
 	 *
 	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	private function chainingStart(File $phpcsFile, $ptr = null)
+	public function chainingStart(File $phpcsFile, $ptr = null)
 	{
 		if ($this->isObjectOperator($phpcsFile, $ptr)) {
 			do {
@@ -1252,7 +1271,7 @@ trait UtilityTrait
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	private function startChain(File $phpcsFile, $ptr = null)
+	public function startChain(File $phpcsFile, $ptr = null)
 	{
 		if ($this->isObjectOperator($phpcsFile, $ptr)) {
 			$sos    = $phpcsFile->findStartOfStatement($ptr);

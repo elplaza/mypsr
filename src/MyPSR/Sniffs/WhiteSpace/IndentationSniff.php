@@ -97,10 +97,9 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 					$this->checkIndentation($phpcsFile, $i, $iPscol);
 				} elseif (
 					$this->isObjectOperator($phpcsFile, $i)
-					&& !$this->isObjectOperator($phpcsFile, $prevScol)
-					&& !$this->isCloseBracket($phpcsFile, $prevEcol)
+					&& $this->isFirstChaining($phpcsFile, $i)
 				) {
-					// se è un operatore di chaining e il PSCOL non lo è,
+					// se è il primo operatore di chaining
 					// allora lo indento di 1 tab in più
 					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
 				} elseif (

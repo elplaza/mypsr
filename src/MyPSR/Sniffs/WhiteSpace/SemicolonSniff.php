@@ -28,6 +28,7 @@ class SemicolonSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		$prevCode = $this->prevCode($phpcsFile, $stackPtr - 1, $sos);
 		if (
 			$this->isCloseBracket($phpcsFile, $prevCode)
+			&& $this->isScol($phpcsFile, $prevCode)
 			&& $this->isSameLine($phpcsFile, $prevCode, $stackPtr)
 		) {
 			$this->noWhitespaceBefore($phpcsFile, $stackPtr);

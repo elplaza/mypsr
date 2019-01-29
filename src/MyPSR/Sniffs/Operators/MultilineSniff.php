@@ -2,9 +2,9 @@
 
 namespace MyPSR\Sniffs\Operators;
 
-use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
-
+/**
+ * Splitta le righe contenetnti operatori
+ */
 class MultilineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
 	use \MyPSR\Sniffs\UtilityTrait;
@@ -18,13 +18,12 @@ class MultilineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		);
 	}
 
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
         $sos = $phpcsFile->findStartOfStatement($stackPtr);
         $eos = $phpcsFile->findEndOfStatement($stackPtr);
         if (
-            $this->isValid($phpcsFile, $sos)
-            && $this->isValid($phpcsFile, $eos)
+            $this->areValid($phpcsFile, array($sos, $eos))
             && !$this->isSameLine($phpcsFile, $sos, $eos)
         ) {
             $this->startCodeOfLine($phpcsFile, $stackPtr);

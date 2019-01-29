@@ -2,8 +2,6 @@
 
 namespace MyPSR\Sniffs\Methods;
 
-use PHP_CodeSniffer\Files\File;
-
 /**
  * Tutti i metodi devono avere la visibilità esplicitata
  */
@@ -16,7 +14,7 @@ class VisibilitySniff implements \PHP_CodeSniffer\Sniffs\Sniff
         return array(T_FUNCTION);
     }
 
-    public function process(File $phpcsFile, $stackPtr)
+    public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
     {
         $methodName = $phpcsFile->getDeclarationName($stackPtr);
         if ($methodName === null) {

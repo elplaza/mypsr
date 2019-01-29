@@ -2,11 +2,9 @@
 
 namespace MyPSR\Sniffs\ControlStructures;
 
-use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
-
 /**
- * Ensures all control structure have correct spacing.
+ * Tutte le strutture di controllo devono avere uno spazio
+ * tra loro e le parentesi
  */
 class SpacingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
@@ -20,7 +18,7 @@ class SpacingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
         );
     }
 
-    public function process(File $phpcsFile, $stackPtr)
+    public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
     {
         if (!$this->isValid($phpcsFile, $stackPtr)) {
             return;

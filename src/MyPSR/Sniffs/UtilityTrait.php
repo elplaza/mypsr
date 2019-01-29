@@ -39,8 +39,9 @@ trait UtilityTrait
 
 	/**
 	 * Il ptr è valido?
-	 * @param  File    $phpcsFile
-	 * @param  int     $ptr
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
 	 * @return boolean
 	 */
 	public function isValid(File $phpcsFile, $ptr = null)
@@ -57,6 +58,28 @@ trait UtilityTrait
 			) {
 				return true;
 			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * I $ptrs sono tutti validi?
+	 *
+	 * @param  File       $phpcsFile
+	 * @param  array|null $ptrs
+	 * @return boolean
+	 */
+	public function areValid(File $phpcsFile, $ptrs = null)
+	{
+		if (is_array($ptrs) && !empty($ptrs)) {
+			foreach ($ptrs as $ptr) {
+				if (!$this->isValid($phpcsFile, $ptr)) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		return false;
@@ -110,10 +133,7 @@ trait UtilityTrait
 	 */
 	public function ddi(File $phpcsFile, $start = null, $end = null, $type = true)
 	{
-		if (
-			$this->isValid($phpcsFile, $start)
-			&& $this->isValid($phpcsFile, $end)
-		) {
+		if ($this->areValid($phpcsFile, array($start, $end))) {
 			$this->dd($phpcsFile, range($start, $end), $type);
 		}
 
@@ -571,7 +591,6 @@ trait UtilityTrait
 		return $this->isType($phpcsFile, $this->getSwitchKeywords(), $ptr);
 	}
 
-
 	/**********************************************/
 	/****************** FIND TYPE *****************/
 	/**********************************************/
@@ -666,7 +685,6 @@ trait UtilityTrait
 
 		return (is_numeric($prev)) ? $prev : null;
 	}
-
 
 	/**********************************************/
 	/****************** FIND LINE *****************/
@@ -814,7 +832,6 @@ trait UtilityTrait
 		}
 	}
 
-
 	/**********************************************/
 	/*************** OTHERS UTILITY ***************/
 	/**********************************************/
@@ -900,7 +917,7 @@ trait UtilityTrait
 	 */
 	public function isSameLine(File $phpcsFile, $ptr1 = null, $ptr2 = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr1) && $this->isValid($phpcsFile, $ptr2)) {
+		if ($this->areValid($phpcsFile, array($ptr1, $ptr2))) {
 			$tokens = $phpcsFile->getTokens();
 			return ($tokens[$ptr1]["line"] === $tokens[$ptr2]["line"]);
 		}
@@ -961,7 +978,6 @@ trait UtilityTrait
 			}
 		}
 	}
-
 
 	/**********************************************/
 	/*************** ARRAYS UTILITY ***************/
@@ -1138,7 +1154,8 @@ trait UtilityTrait
 	}
 
 	/**
-	 * Dammi le virgole "valide" (quelle che delimitano gli elementi dell'array, non innestate insomma).
+	 * Dammi le virgole "valide" (quelle che delimitano gli elementi dell'array,
+	 * non innestate insomma).
 	 *
 	 * @param  File       $phpcsFile
 	 * @param  int|null   $ptr
@@ -1177,6 +1194,144 @@ trait UtilityTrait
 		}
 	}
 
+	/**********************************************/
+	/************** CHAINING UTILITY **************/
+	/**********************************************/
+
+	/**
+	 * dammi il token che apre l'intero chaining
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return int|null
+	 */
+	private function chainingStart(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			do {
+				$start = $this->startChain($phpcsFile, $ptr);
+				$ptr   = $this->prevChain($phpcsFile, $ptr);
+			} while ($this->isObjectOperator($phpcsFile, $ptr));
+
+			return $start;
+		}
+	}
+
+	/**
+	 * dammi il token che chiude l'intero chaining
+	 *
+	 * Nota: se l'ultimo chain ha le parentesi, il token
+	 * che chiude l'intero chaining sarà la rispettiva parentesi
+	 * di apertura. Questo perché il chaining è considerato multiline
+	 * se ha almeno anche l'ultima parentesi di apertura a capo.
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return int|null
+	 */
+	public function chainingEnd(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			do {
+				$end = $this->endChain($phpcsFile, $ptr);
+				$ptr = $this->nextChain($phpcsFile, $ptr);
+			} while ($this->isObjectOperator($phpcsFile, $ptr));
+
+			if ($this->isCloseBracket($phpcsFile, $end)) {
+				return $this->getOpener($phpcsFile, $end);
+			}
+
+			return $end;
+		}
+	}
+
+	/**
+	 * dammi il token che apre il chaining di $ptr
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return int|null
+	 */
+	private function startChain(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			$sos    = $phpcsFile->findStartOfStatement($ptr);
+			$prev1  = $this->prevCode($phpcsFile, $ptr - 1, $sos);
+			if ($this->isCloseBracket($phpcsFile, $prev1)) {
+				$opener = $this->getOpener($phpcsFile, $prev1);
+				$prev1  = $this->prevCode($phpcsFile, $opener - 1, $sos);
+			}
+
+			$tokens = $phpcsFile->getTokens();
+			return in_array($tokens[$prev1]["code"], array(T_STRING, T_VARIABLE)) ? $prev1 : $sos;
+		}
+	}
+
+	/**
+	 * dammi il chaining operator precedente a $ptr
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return int|null
+	 */
+	public function prevChain(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			$startPtrChain = $this->startChain($phpcsFile, $ptr);
+			if ($this->isValid($phpcsFile, $startPtrChain)) {
+				$sos     = $phpcsFile->findStartOfStatement($ptr);
+				$prevOpr = $this->prevCode($phpcsFile, $startPtrChain - 1, $sos);
+				if ($this->isObjectOperator($phpcsFile, $prevOpr)) {
+					return $prevOpr;
+				}
+			}
+		}
+	}
+
+	/**
+	 * dammi il token che chiude il chaining di $ptr
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return int|null
+	 */
+	public function endChain(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			$eos    = $phpcsFile->findEndOfStatement($ptr);
+			$next1  = $this->nextCode($phpcsFile, $ptr + 1, $eos);
+			$tokens = $phpcsFile->getTokens();
+			if (in_array($tokens[$next1]["code"], array(T_STRING, T_VARIABLE))) {
+				$next2 = $this->nextCode($phpcsFile, $next1 + 1, $eos);
+				if ($this->isBlockOpener($phpcsFile, $next2)) {
+					return $this->getCloser($phpcsFile, $next2);
+				} else {
+					return $next1;
+				}
+			}
+		}
+	}
+
+	/**
+	 * dammi il chaining operator successivo a $ptr
+	 *
+	 * @param  File     $phpcsFile
+	 * @param  int|null $ptr
+	 * @return int|null
+	 */
+	public function nextChain(File $phpcsFile, $ptr = null)
+	{
+		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+			$endPtrChain = $this->endChain($phpcsFile, $ptr);
+			if ($this->isValid($phpcsFile, $endPtrChain)) {
+				$eos     = $phpcsFile->findEndOfStatement($ptr);
+				$nextOpr = $this->nextCode($phpcsFile, $endPtrChain + 1, $eos);
+				if ($this->isObjectOperator($phpcsFile, $nextOpr)) {
+					return $nextOpr;
+				}
+			}
+		}
+	}
 
 	/**********************************************/
 	/**************** FIXER UTILITY ***************/
@@ -1195,56 +1350,20 @@ trait UtilityTrait
 			$tokens   = $phpcsFile->getTokens();
 			$content  = $tokens[$ptr]["content"];
 			$expected = strtolower(trim($content));
-	        if ($content !== $expected) {
-	            $fix = $phpcsFile->addFixableError(
-	                "It should be lowercase: expected \"%s\" but found \"%s\"",
-	                $ptr,
-	                "NotLowerCase",
-	                array($expected, $content)
-	            );
-	            if ($fix === true) {
-	                $phpcsFile->fixer->beginChangeset();
-	                $phpcsFile->fixer->replaceToken($ptr, $expected);
-	                $phpcsFile->fixer->endChangeset();
-	            }
-	        }
+			if ($content !== $expected) {
+				$fix = $phpcsFile->addFixableError(
+					"It should be lowercase: expected \"%s\" but found \"%s\"",
+					$ptr,
+					"NotLowerCase",
+					array($expected, $content)
+				);
+				if ($fix === true) {
+					$phpcsFile->fixer->beginChangeset();
+					$phpcsFile->fixer->replaceToken($ptr, $expected);
+					$phpcsFile->fixer->endChangeset();
+				}
+			}
 		}
-	}
-
-	/**
-	 * $ptr ha caratteri di tipo whitespace alla fine?
-	 *
-	 * @param  File     $phpcsFile
-	 * @param  int|null $ptr
-	 * @return boolean
-	 */
-	public function haveEndingWhitespaces(File $phpcsFile, $ptr = null)
-	{
-		if ($this->isValid($phpcsFile, $ptr) && !$this->isNoCode($phpcsFile, $ptr)) {
-			$tokens  = $phpcsFile->getTokens();
-			$content = $tokens[$ptr]["content"];
-			return (rtrim($content) !== $content);
-		}
-
-		return false;
-	}
-
-	/**
-	 * $ptr ha caratteri di tipo whitespace all'inizio?
-	 *
-	 * @param  File     $phpcsFile
-	 * @param  int|null $ptr
-	 * @return boolean
-	 */
-	public function haveStartingWhitespaces(File $phpcsFile, $ptr = null)
-	{
-		if ($this->isValid($phpcsFile, $ptr) && !$this->isNoCode($phpcsFile, $ptr)) {
-			$tokens  = $phpcsFile->getTokens();
-			$content = $tokens[$ptr]["content"];
-			return (ltrim($content) !== $content);
-		}
-
-		return false;
 	}
 
 	/**
@@ -1256,7 +1375,7 @@ trait UtilityTrait
 	 */
 	public function oneSpaceAfter(File $phpcsFile, $ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isValid($phpcsFile, $ptr + 1)) {
+		if ($this->areValid($phpcsFile, array($ptr, $ptr + 1))) {
 			$nextCode = $this->nextCode($phpcsFile, $ptr + 1);
 			if (!is_null($nextCode)) {
 				if ($nextCode != $ptr + 2 || !$this->isOneWhitespace($phpcsFile, $ptr + 1)) {
@@ -1293,7 +1412,7 @@ trait UtilityTrait
 	 */
 	public function oneSpaceBefore(File $phpcsFile, $ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isValid($phpcsFile, $ptr - 1)) {
+		if ($this->areValid($phpcsFile, array($ptr, $ptr - 1))) {
 			$prevCode = $this->prevCode($phpcsFile, $ptr - 1);
 			if (!is_null($prevCode)) {
 				if ($prevCode != $ptr - 2 || !$this->isOneWhitespace($phpcsFile, $ptr - 1)) {
@@ -1342,7 +1461,7 @@ trait UtilityTrait
 	 */
 	public function noWhitespaceAfter(File $phpcsFile, $ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isValid($phpcsFile, $ptr + 1)) {
+		if ($this->areValid($phpcsFile, array($ptr, $ptr + 1))) {
 			$nextCode = $this->nextCode($phpcsFile, $ptr + 1);
 			if (!is_null($nextCode) && $nextCode != $ptr + 1) {
 				$tokens = $phpcsFile->getTokens();
@@ -1374,7 +1493,7 @@ trait UtilityTrait
 	 */
 	public function noWhitespaceBefore(File $phpcsFile, $ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isValid($phpcsFile, $ptr - 1)) {
+		if ($this->areValid($phpcsFile, array($ptr, $ptr - 1))) {
 			$prevCode = $this->prevCode($phpcsFile, $ptr - 1);
 			if (!is_null($prevCode) && $prevCode != $ptr - 1) {
 				$tokens = $phpcsFile->getTokens();
@@ -1407,8 +1526,7 @@ trait UtilityTrait
 	public function oneEolAfter(File $phpcsFile, $ptr = null)
 	{
 		if (
-			$this->isValid($phpcsFile, $ptr)
-			&& $this->isValid($phpcsFile, $ptr + 1)
+			$this->areValid($phpcsFile, array($ptr, $ptr + 1))
 			&& !$this->isEol($phpcsFile, $ptr + 1, true)
 		) {
 			$tokens = $phpcsFile->getTokens();
@@ -1435,7 +1553,7 @@ trait UtilityTrait
 	 */
 	public function startCodeOfLine(File $phpcsFile, $ptr = null)
 	{
-		if($this->isValid($phpcsFile, $ptr) && !$this->isScol($phpcsFile, $ptr)) {
+		if ($this->isValid($phpcsFile, $ptr) && !$this->isScol($phpcsFile, $ptr)) {
 			$tokens = $phpcsFile->getTokens();
 
 			$fix = $phpcsFile->addFixableError(
@@ -1461,7 +1579,7 @@ trait UtilityTrait
 	 */
 	public function removeEmptyLine(File $phpcsFile, $ptr = null)
 	{
-		if($this->isValid($phpcsFile, $ptr) && $this->isEmptyLine($phpcsFile, $ptr)) {
+		if ($this->isValid($phpcsFile, $ptr) && $this->isEmptyLine($phpcsFile, $ptr)) {
 			$sol = $this->findSol($phpcsFile, $ptr);
 			$eol = $this->findEol($phpcsFile, $ptr);
 
@@ -1492,11 +1610,7 @@ trait UtilityTrait
 	 */
 	public function removeEmptyLines(File $phpcsFile, $start, $end)
 	{
-		if (
-			$this->isValid($phpcsFile, $start)
-			&& $this->isValid($phpcsFile, $end)
-			&& $start < $end
-		) {
+		if ($this->areValid($phpcsFile, array($start, $end)) && $start < $end) {
 			for ($i = $start + 1; $i < $end; $i++) {
 				if ($this->isSol($phpcsFile, $i)) {
 					$this->removeEmptyLine($phpcsFile, $i);
@@ -1504,16 +1618,6 @@ trait UtilityTrait
 			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
 
 	/**********************************************/
 	/************* INDENTATION UTILITY ************/
@@ -1572,298 +1676,4 @@ trait UtilityTrait
 		}
 	}
 
-	/**
-	 * Indenta $ptr.
-	 *
-	 * @param  File $phpcsFile
-	 * @param  int  $ptr
-	 */
-	public function indent(File $phpcsFile, $ptr, $additionalTabs = 0)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		if (
-			!empty($ptr)
-			&& !empty($tokens[$ptr])
-			&& $this->isScol($phpcsFile, $ptr)
-			&& !$this->indentationIsOk($phpcsFile, $ptr, $additionalTabs)
-		) {
-			$fix = $phpcsFile->addFixableError(
-				"\"%s\" is not indented correctly",
-				$ptr,
-				"IncorrectIndentation",
-				array($tokens[$ptr]["content"])
-			);
-
-			if ($fix === true) {
-				$tabs   = $this->getIndentationTabs($phpcsFile, $ptr) + $additionalTabs;
-				$string = str_repeat("\t", $tabs);
-				$sol    = $this->findSol($phpcsFile, $ptr);
-				$phpcsFile->fixer->beginChangeset();
-				if ($ptr > $sol) {
-					for ($i = $sol; $i < $ptr; $i++) {
-						$phpcsFile->fixer->replaceToken($i, "");
-					}
-				}
-
-				$phpcsFile->fixer->addContentBefore($ptr, $string);
-				$phpcsFile->fixer->endChangeset();
-			}
-		}
-	}
-
-	/**
-	 * in quante parentesi è innestato $ptr?
-	 */
-	public function getAllPreviousOpenParenthesis(File $phpcsFile, $ptr)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		if (empty($ptr) || empty($tokens[$ptr])) {
-			return 0;
-		}
-
-		$parenthesis = array();
-
-		$start = $ptr - 1;
-
-		$openers = array_merge($this->getBlockOpeners(), array(T_OPEN_SHORT_ARRAY));
-		do {
-			$opener = $phpcsFile->findPrevious($openers, $start);
-			if (!empty($opener) && !empty($tokens[$opener])) {
-				$oToken = $tokens[$opener];
-				$closer = null;
-				if (isset($oToken["parenthesis_closer"])) {
-					$closer = $oToken["parenthesis_closer"];
-				} elseif (isset($oToken["bracket_closer"])) {
-					$closer = $oToken["bracket_closer"];
-				}
-
-				if (!empty($closer) && $closer > $ptr) {
-					$parenthesis[] = $opener;
-				}
-
-				$start = $opener - 1;
-			}
-		} while (!empty($opener));
-
-		return $parenthesis;
-	}
-
-	/**
-	 * in quante parentesi non nella stessa riga è innestato $ptr?
-	 */
-	public function getOpenersNoSameLine(File $phpcsFile, $ptr)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		$noSameLineOpeners = array();
-		if (!empty($ptr) && !empty($tokens[$ptr])) {
-			$open = null;
-			if (
-				in_array($tokens[$ptr]["code"], $this->getBrackets())
-				&& !in_array($tokens[$ptr]["code"], $this->getBlockOpeners())
-			) {
-				// se è una parentesi di chiusura considero
-				// la rispettiva parentesi di apertura
-				$cToken = $tokens[$ptr];
-				if (isset($cToken["parenthesis_opener"])) {
-					$open = $cToken["parenthesis_opener"];
-				} elseif (isset($cToken["bracket_opener"])) {
-					$open = $cToken["bracket_opener"];
-				}
-			}
-
-			$openers = $this->getAllPreviousOpenParenthesis($phpcsFile, $ptr);
-			$count   = count($openers);
-			for ($i = 0; $i < $count; $i++) {
-				$noSameLineOpener = null;
-				if (
-					!isset($openers[$i + 1])
-					|| !$this->isSameLine($phpcsFile, $openers[$i], $openers[$i + 1])
-				) {
-					$noSameLineOpener = $openers[$i];
-				}
-
-				if (!empty($noSameLineOpener)) {
-					if (
-						empty($open)
-						|| !$this->isSameLine($phpcsFile, $noSameLineOpener, $open)
-					) {
-						$noSameLineOpeners[] = $noSameLineOpener;
-					}
-				}
-			}
-		}
-
-		return $noSameLineOpeners;
-	}
-
-	/**
-	 * di quanti tabs dovrebbe essere indentato $ptr?
-	 */
-	public function getIndentationTabs(File $phpcsFile, $ptr)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		$excludeSamePtrLine = array();
-		if (!empty($ptr) && !empty($tokens[$ptr])) {
-			$openers = $this->getOpenersNoSameLine($phpcsFile, $ptr);
-			$count   = count($openers);
-			for ($i = 0; $i < $count; $i++) {
-				if (!$this->isSameLine($phpcsFile, $openers[$i], $ptr)) {
-					$excludeSamePtrLine[] = $openers[$i];
-				}
-			}
-		}
-
-		//return count($excludeSamePtrLine);
-		return count($excludeSamePtrLine) + $this->getAdditionalTabs($phpcsFile, $ptr);
-	}
-
-	/**
-	 * ci sono dei casi in cui i tab di indentazione non dipendono
-	 * solo ed esclusivamente dalle parentesi (per es. i "case", il "chaining", etc...)
-	 */
-	public function getAdditionalTabs(File $phpcsFile, $ptr)
-	{
-		$addTabs = 0;
-		if ($this->isInsideCase($phpcsFile, $ptr)) {
-			$addTabs += $this->countCases($phpcsFile, $ptr);
-		}
-
-		if (
-			$this->isOperator($phpcsFile, $ptr)
-			&& $this->isScol($phpcsFile, $ptr)
-			&& !$this->isBooleanOperator($phpcsFile, $ptr)
-		) {
-			$addTabs++;
-		}
-
-		return $addTabs;
-	}
-
-	/**
-	 * è dentro una condizione "case"?
-	 */
-	public function isInsideCase(File $phpcsFile, $ptr)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		$case = $phpcsFile->findPrevious($this->getSwitchKeywords(), $ptr - 1);
-		if (
-			!empty($case)
-			&& !empty($tokens[$case])
-			&& isset($tokens[$case]["scope_opener"])
-			&& isset($tokens[$case]["scope_closer"])
-		) {
-			$opener = $tokens[$case]["scope_opener"];
-			$closer = $tokens[$case]["scope_closer"];
-			if ($ptr > $opener && $ptr <= $closer) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	public function countCases(File $phpcsFile, $ptr)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		if (in_array($tokens[$ptr]["code"], $this->getSwitchKeywords())) {
-			$start = $phpcsFile->findPrevious(array(T_SWITCH), $ptr - 1);
-		} else {
-			$start = $ptr;
-		}
-
-		$cases = 0;
-		while ($this->isInsideCase($phpcsFile, $start)) {
-			$cases++;
-			$start = $phpcsFile->findPrevious(array(T_SWITCH), $start - 1);
-		}
-
-		return $cases;
-	}
-
-	/**
-	 * l'indentazione è ok?
-	 */
-	public function indentationIsOk(File $phpcsFile, $ptr, $additionalTabs = 0)
-	{
-		$tokens = $phpcsFile->getTokens();
-
-		if (empty($ptr) || empty($tokens[$ptr]) || $tokens[$ptr]["code"] === T_WHITESPACE) {
-			return true;
-		} else {
-			$tabs              = $this->getIndentationTabs($phpcsFile, $ptr) + $additionalTabs;
-			$actualIndentation = $this->getActualIndentationString($phpcsFile, $ptr);
-			$actualTabs        = $this->tabStrLength($phpcsFile, $actualIndentation);
-
-			return ($actualTabs === $tabs);
-		}
-	}
-
-	/**
-	 * dammi la stringa di indentazione attuale di $ptr?
-	 */
-	public function getActualIndentationString(File $phpcsFile, $ptr)
-	{
-		$tokens      = $phpcsFile->getTokens();
-		$indentation = "";
-		$flc         = $this->findScol($phpcsFile, $ptr);
-		$sol         = $this->findSol($phpcsFile, $ptr);
-		if (!empty($sol) && !empty($flc)) {
-			for ($i = $sol; $i < $flc; $i++) {
-				$token = $tokens[$i];
-				if (
-					$token["code"] === T_WHITESPACE
-					&& !empty($token["length"])
-				) {
-					$indentation .= $token["content"];
-				}
-			}
-		}
-
-		return $indentation;
-	}
-
-
-	/**********************************************/
-	/************ TABS - SPACES UTILITY ***********/
-	/**********************************************/
-
-	/**
-	 * quanti tab è lunga la stringa?
-	 */
-	public function tabStrLength(File $phpcsFile, $string)
-	{
-		$spaceString = $this->spaceStringConverter($phpcsFile, $string);
-		return $this->spacesConverter($phpcsFile, strlen($spaceString), "spaces");
-	}
-
-	/**
-	 * dammi la stringa convertita in spazi?
-	 */
-	public function spaceStringConverter(File $phpcsFile, $string)
-	{
-		$spaces    = str_repeat(" ", $this->getTabWidth($phpcsFile));
-		return str_replace("\t", $spaces, $string);
-	}
-
-	/**
-	 * a quanti tab corrispondono $value spazi?
-	 * a quanti spazi corrispondono $value tabs?
-	 *
-	 * @param $type string "spaces" or "tabs"
-	 */
-	public function spacesConverter(File $phpcsFile, $value, $type = "spaces")
-	{
-		$exchangeTax = $this->getTabWidth($phpcsFile);
-		if ($type === "spaces") {
-			return $value / $exchangeTax;
-		} elseif ($type === "tabs") {
-			return $value * $exchangeTax;
-		}
-	}
 }

@@ -4,6 +4,9 @@ namespace MyPSR\Sniffs\WhiteSpace;
 
 use PHP_CodeSniffer\Files\File;
 
+/**
+ * Formatta l'operatore ternario
+ */
 class TernarySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
 	use \MyPSR\Sniffs\UtilityTrait;
@@ -15,8 +18,8 @@ class TernarySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(File $phpcsFile, $stackPtr)
 	{
-		$end   = $phpcsFile->findEndOfStatement($stackPtr);
 		$start = $phpcsFile->findStartOfStatement($stackPtr);
+		$end   = $phpcsFile->findEndOfStatement($stackPtr);
 		$else  = $this->findTernaryElse($phpcsFile, $stackPtr);
 
 		if ($this->isSameLine($phpcsFile, $start, $end)) {

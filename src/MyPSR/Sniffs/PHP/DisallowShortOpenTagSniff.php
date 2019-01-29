@@ -2,10 +2,8 @@
 
 namespace MyPSR\Sniffs\PHP;
 
-use PHP_CodeSniffer\Files\File;
-
 /**
- * Makes sure that shorthand PHP open tags are not used.
+ * I PHP short open tags non devono essere usati a meno di <?=.
  *
  * Note:
  * 	- il tag <?= è ammesso in quanto supportato da php 5.4 in poi
@@ -13,13 +11,11 @@ use PHP_CodeSniffer\Files\File;
  * 	- il tag <? di apertura invece non è ammesso in quanto costringe
  * 	  ad abilitare short_open_tag nel php.ini e quindi è scoraggiato
  * 	  per motivi di portabilità
- *
- * riferimento: http://php.net/manual/en/language.basic-syntax.phptags.php
  */
 class DisallowShortOpenTagSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
     use \MyPSR\Sniffs\UtilityTrait;
-    
+
     public function register()
     {
         return array(
@@ -28,16 +24,7 @@ class DisallowShortOpenTagSniff implements \PHP_CodeSniffer\Sniffs\Sniff
         );
     }
 
-    /**
-     * Processes this test, when one of its tokens is encountered.
-     *
-     * @param File $phpcsFile The file being scanned.
-     * @param int  $stackPtr  The position of the current token
-     *                        in the stack passed in $tokens.
-     *
-     * @return void
-     */
-    public function process(File $phpcsFile, $stackPtr)
+    public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
     {
         $tokens  = $phpcsFile->getTokens();
         $content = $tokens[$stackPtr]["content"];
@@ -93,5 +80,5 @@ class DisallowShortOpenTagSniff implements \PHP_CodeSniffer\Sniffs\Sniff
         } else {
             $phpcsFile->recordMetric($stackPtr, "PHP short open tag used", "no");
         }
-    }//end process()
-}//end class
+    }
+}

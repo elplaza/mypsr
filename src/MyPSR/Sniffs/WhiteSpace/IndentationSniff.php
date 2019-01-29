@@ -2,9 +2,12 @@
 
 namespace MyPSR\Sniffs\WhiteSpace;
 
-use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
-
+/**
+ * Indenta tutti i first-of-line
+ *
+ * Nota: questo sniff si occupa solo di indentare tutti i first-of-line,
+ * altri sniff si devono preoccupare di rendere qualcosa first-of-line
+ */
 class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
 	use \MyPSR\Sniffs\UtilityTrait;
@@ -14,13 +17,7 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		return array(T_OPEN_TAG);
 	}
 
-	/**
-	 * Indenta tutti i first-of-line
-	 * Si occupa solo di indentare tutti i first-of-line,
-	 * un altro sniff si deve preoccupare di rendere qualcosa
-	 * first-of-line
-	 */
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
 		$tokens = $phpcsFile->getTokens();
 

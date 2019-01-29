@@ -2,10 +2,13 @@
 
 namespace MyPSR\Sniffs\Arrays;
 
-use PHP_CodeSniffer\Files\File;
-
 /**
- * Sniff to ensure that single line arrays conform to the array coding standard.
+ * Gli array single line devono:
+ * - non avere una virgola dopo l'ultimo elemento
+ * - non avere spazi prima delle virgole e un solo spazio dopo
+ * - avere uno spazio prima e dopo le =>
+ * - non avere spazi o commenti dopo la parentesi di apertura
+ *   e prima della parentesi di chiusura
  */
 class SingleLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
@@ -16,7 +19,7 @@ class SingleLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		return $this->getArrays();
 	}
 
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
 		if (
 			!$this->isEmptyArray($phpcsFile, $stackPtr)
@@ -24,20 +27,8 @@ class SingleLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		) {
 			// levo la spazzatura (fondamentalmente spazi) tra
 			// la parentesi di apertura e il primo valore
-			$open      = $this->getArrayOpenParenthesis($phpcsFile, $stackPtr);
-			$close     = $this->getArrayCloseParenthesis($phpcsFile, $stackPtr);
-			$firstCode = $this->nextCode($phpcsFile, $open + 1, $close);
-			if ($firstCode !== $open + 1) {
-				$error = "The code must be immediately after the opening bracket in one value array declaration";
-				$fix   = $phpcsFile->addFixableError($error, $firstCode, "TrashAfterOpen");
-				if ($fix === true) {
-					$phpcsFile->fixer->beginChangeset();
-					for ($i = $open + 1; $i < $firstCode; $i++) {
-						$phpcsFile->fixer->replaceToken($i, "");
-					}
-					$phpcsFile->fixer->endChangeset();
-				}
-			}
+			$open = $this->getArrayOpenParenthesis($phpcsFile, $stackPtr);
+			$this->noWhitespaceAfter($phpcsFile, $open);
 
 			// processo tutte le virgole "valide"
 			$commas = $this->getArrayValidCommas($phpcsFile, $stackPtr);
@@ -61,6 +52,7 @@ class SingleLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 			// levo gli spazi e la virgola "opzionale" tra
 			// l'ultimo valore e la parentesi di chiusura
+			$close    = $this->getArrayCloseParenthesis($phpcsFile, $stackPtr);
 			$lastCode = $this->prevCode($phpcsFile, $close - 1, $open);
 			if ($this->isComma($phpcsFile, $lastCode)) {
 				$lastCode = $this->prevCode($phpcsFile, $lastCode - 1, $open);
@@ -78,5 +70,5 @@ class SingleLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 				}
 			}
 		}
-	}//end process()
-}//end class
+	}
+}

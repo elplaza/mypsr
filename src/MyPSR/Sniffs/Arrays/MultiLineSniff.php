@@ -3,7 +3,6 @@
 namespace MyPSR\Sniffs\Arrays;
 
 use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
 
 /**
  * Gli array multi line devono:
@@ -28,9 +27,6 @@ class MultiLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 			!$this->isEmptyArray($phpcsFile, $stackPtr)
 			&& $this->isMultiLineArray($phpcsFile, $stackPtr)
 		) {
-			$open  = $this->getArrayOpenParenthesis($phpcsFile, $stackPtr);
-			$close = $this->getArrayCloseParenthesis($phpcsFile, $stackPtr);
-			
 			// processo tutte le virgole "valide"
 			$commas = $this->getArrayValidCommas($phpcsFile, $stackPtr);
 			if (!empty($commas)) {
@@ -51,6 +47,8 @@ class MultiLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 			}
 
 			// se c'è, elimino la virgola dell'ultimo elemento
+			$open     = $this->getArrayOpenParenthesis($phpcsFile, $stackPtr);
+			$close    = $this->getArrayCloseParenthesis($phpcsFile, $stackPtr);
 			$lastCode = $this->prevCode($phpcsFile, $close - 1, $open);
 			if ($this->isComma($phpcsFile, $lastCode)) {
 				$fix = $phpcsFile->addFixableError(
@@ -147,7 +145,7 @@ class MultiLineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 	/**
 	 * calcola la lunghezza del codice valido tra i token $start e $end
 	 */
-	private function codeInfo($phpcsFile, $start, $end)
+	private function codeInfo(File $phpcsFile, $start, $end)
 	{
 		$tokens = $phpcsFile->getTokens();
 		$svc    = false;

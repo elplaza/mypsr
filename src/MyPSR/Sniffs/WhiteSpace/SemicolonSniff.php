@@ -2,8 +2,9 @@
 
 namespace MyPSR\Sniffs\WhiteSpace;
 
-use PHP_CodeSniffer\Files\File;
-
+/**
+ * Manda a capo e indenta il punto e virgola
+ */
 class SemicolonSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
 	use \MyPSR\Sniffs\UtilityTrait;
@@ -13,7 +14,7 @@ class SemicolonSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		return array(T_SEMICOLON);
 	}
 
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
 		$sos = $phpcsFile->findStartOfStatement($stackPtr - 1);
 
@@ -36,7 +37,7 @@ class SemicolonSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		// multiline e non subito dopo la parentesi di chiusura
 		if ($this->isScol($phpcsFile, $stackPtr)) {
 			$iSos = $this->getWhitespaces($phpcsFile, $sos);
-			$this->checkIndentation($phpcsFile, $stackPtr, $iSos);		
+			$this->checkIndentation($phpcsFile, $stackPtr, $iSos);
 		} else {
 			$this->startCodeOfLine($phpcsFile, $stackPtr);
 		}

@@ -36,17 +36,17 @@ Una volta installati i tools, questi, come lo standard da usare, vanno comunicat
 
 ### Lanciare i test
 Per lanciare i test del MyPSR basta:
-- lanciare un test singolo: `./bin/phpunit src/MyPSR/Tests/WhiteSpace/BracketsUnitTest.php`
-- lanciare tutti i test: `./bin/phpunit --testsuite MyPSR`
+- lanciare un test singolo: `./vendor/bin/phpunit src/MyPSR/Tests/WhiteSpace/BracketsUnitTest.php`
+- lanciare tutti i test: `./vendor/bin/phpunit --testsuite MyPSR`
 
 Utile per testare il nostro PSR:
-- tutto lo standard: `./bin/phpcs -s -vvv --standard=./src/MyPSR testfile.php`
-- solo uno sniff: `./bin/phpcs -s -vvv --standard=./src/MyPSR --sniffs=MyPSR.Arrays.Multiline testfile.php`
-- per il fixer: `./bin/phpcbf -vvv --standard=./src/MyPSR --sniffs=MyPSR.Arrays.Multiline testfile.php`
+- tutto lo standard: `./vendor/bin/phpcs -s -vvv --standard=./src/MyPSR testfile.php`
+- solo uno sniff: `./vendor/bin/phpcs -s -vvv --standard=./src/MyPSR --sniffs=MyPSR.Arrays.Multiline testfile.php`
+- per il fixer: `./vendor/bin/phpcbf -vvv --standard=./src/MyPSR --sniffs=MyPSR.Arrays.Multiline testfile.php`
 
 ### Comandi utili
 Comandi utili:
-- stampa la lista dei coding standard installati: `./bin/phpcs -i`
-- stampa tutti gli sniff presenti nello standard specificato: `./bin/phpcs -e --standard=PSR2`
-- stampa la documentazione per ogni sniff dello standard: `./bin/phpcs --generator=Text --standard=./src/MyPSR`
-- stampa la documentazione per il singolo sniff: `./bin/phpcs --generator=Text --standard=./src/MyPSR --sniffs=MyPSR.Arrays.Multiline`
+- stampa la lista dei coding standard installati: `./vendor/bin/phpcs -i`
+- stampa tutti gli sniff presenti nello standard specificato: `./vendor/bin/phpcs -e --standard=PSR2`
+- stampa la documentazione per ogni sniff dello standard: `./vendor/bin/phpcs --generator=Text --standard=./src/MyPSR`
+- stampa la documentazione per il singolo sniff: `./vendor/bin/phpcs --generator=Text --standard=./src/MyPSR --sniffs=MyPSR.Arrays.Multiline`

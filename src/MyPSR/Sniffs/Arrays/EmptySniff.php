@@ -2,8 +2,6 @@
 
 namespace MyPSR\Sniffs\Arrays;
 
-use PHP_CodeSniffer\Files\File;
-
 /**
  * Gli array "vuoti" (senza codice valido all'interno)
  * devono avere le parentesi vicine
@@ -17,7 +15,7 @@ class EmptySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		return $this->getArrays();
 	}
 
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
 		// parentesi di apertura e di chiusura dell'array
 		$open  = $this->getArrayOpenParenthesis($phpcsFile, $stackPtr);

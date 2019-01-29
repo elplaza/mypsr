@@ -2,18 +2,19 @@
 
 namespace MyPSR\Sniffs\Strings;
 
-use PHP_CodeSniffer\Files\File;
-
+/**
+ * Le stringhe devono stare tra doppie virgolette
+ */
 class DoubleQuotesSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
     use \MyPSR\Sniffs\UtilityTrait;
-    
+
     public function register()
     {
         return array(T_CONSTANT_ENCAPSED_STRING);
     }
 
-    public function process(File $phpcsFile, $stackPtr)
+    public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
     {
         $tokens  = $phpcsFile->getTokens();
         $content = $tokens[$stackPtr]["content"];
@@ -56,13 +57,7 @@ class DoubleQuotesSniff implements \PHP_CodeSniffer\Sniffs\Sniff
                 );
 
                 $phpcsFile->fixer->beginChangeset();
-                $phpcsFile
-                    ->fixer
-                    ->replaceToken(
-                        $stackPtr,
-                        "\"$newContent\""
-                    )
-                ;
+                $phpcsFile->fixer->replaceToken($stackPtr, "\"$newContent\"");
                 $phpcsFile->fixer->endChangeset();
             }
         }

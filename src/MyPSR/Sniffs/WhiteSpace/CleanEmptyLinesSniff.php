@@ -2,9 +2,9 @@
 
 namespace MyPSR\Sniffs\WhiteSpace;
 
-use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
-
+/**
+ * Processa tutte le parentesi tonde e rimuove le righe vuote
+ */
 class CleanEmptyLinesSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
 	use \MyPSR\Sniffs\UtilityTrait;
@@ -14,10 +14,7 @@ class CleanEmptyLinesSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		return array(T_OPEN_PARENTHESIS);
 	}
 
-	/**
-	 * Processa tutte le parentesi tonde e rimuove le righe vuote
-	 */
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
 		$closer = $this->getCloser($phpcsFile, $stackPtr);
 		if (!is_null($closer)) {

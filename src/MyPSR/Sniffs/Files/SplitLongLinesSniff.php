@@ -3,7 +3,6 @@
 namespace MyPSR\Sniffs\Files;
 
 use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
 
 /**
  * Processa tutte le righe più lunghe di un tot e prova a splittarle

@@ -2,9 +2,9 @@
 
 namespace MyPSR\Sniffs\Operators;
 
-use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
-
+/**
+ * Gli operatori devono essere seguite e precedute da uno e un solo spazio
+ */
 class SpacingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
 	use \MyPSR\Sniffs\UtilityTrait;
@@ -20,7 +20,7 @@ class SpacingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		);
 	}
 
-	public function process(File $phpcsFile, $stackPtr)
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
 		if ($this->isDoubleArrow($phpcsFile, $stackPtr)) {
 			return;

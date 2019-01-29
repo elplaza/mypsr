@@ -1598,7 +1598,15 @@ trait UtilityTrait
 	 */
 	public function removeEmptyLine(File $phpcsFile, $ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isEmptyLine($phpcsFile, $ptr)) {
+		if (
+			$this->isValid($phpcsFile, $ptr)
+			&& $this->isEmptyLine($phpcsFile, $ptr)
+		) {
+			// evito le closures
+			if ($phpcsFile->hasCondition($ptr, T_CLOSURE) === true) {
+				return;
+			}
+
 			$sol = $this->findSol($phpcsFile, $ptr);
 			$eol = $this->findEol($phpcsFile, $ptr);
 

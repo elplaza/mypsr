@@ -22,35 +22,34 @@ class SpacingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
-		if ($this->isDoubleArrow($phpcsFile, $stackPtr)) {
+		$this->setFile($phpcsFile);
+
+		if ($this->isDoubleArrow($stackPtr)) {
 			return;
 		}
 
-		$sos = $phpcsFile->findStartOfStatement($stackPtr);
-		if ($this->isValid($phpcsFile, $sos)) {
+		$sos = $this->file->findStartOfStatement($stackPtr);
+		if ($this->isValid($sos)) {
 			if ($sos === $stackPtr) {
-				$this->noWhitespaceAfter($phpcsFile, $stackPtr);
+				$this->noWhitespaceAfter($stackPtr);
 			} else {
-				$scol = $this->prevCode($phpcsFile, $stackPtr - 1, $sos);
-				if (!$this->isArithmeticOperator($phpcsFile, $stackPtr)) {
-					$this->oneSpaceAfter($phpcsFile, $stackPtr);
+				$scol = $this->prevCode($stackPtr - 1, $sos);
+				if (!$this->isArithmeticOperator($stackPtr)) {
+					$this->oneSpaceAfter($stackPtr);
 				} else {
 					if (
-						$this->isAssignment($phpcsFile, $scol)
-						|| $this->isComma($phpcsFile, $scol)
-						|| $this->isBlockOpener($phpcsFile, $scol)
+						$this->isAssignment($scol)
+						|| $this->isComma($scol)
+						|| $this->isBlockOpener($scol)
 					) {
-						$this->noWhitespaceAfter($phpcsFile, $stackPtr);
+						$this->noWhitespaceAfter($stackPtr);
 					} else {
-						$this->oneSpaceAfter($phpcsFile, $stackPtr);
+						$this->oneSpaceAfter($stackPtr);
 					}
 				}
 
-				if (
-					!$this->isAssignment($phpcsFile, $stackPtr)
-					&& $this->isSameLine($phpcsFile, $scol, $stackPtr)
-				) {
-					$this->oneSpaceBefore($phpcsFile, $stackPtr);
+				if (!$this->isAssignment($stackPtr)	&& $this->isSameLine($scol, $stackPtr)) {
+					$this->oneSpaceBefore($stackPtr);
 				}
 			}
 		}

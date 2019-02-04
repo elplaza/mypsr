@@ -7,6 +7,17 @@ use PHP_CodeSniffer\Util\Tokens;
 
 trait UtilityTrait
 {
+	protected $file;
+	protected $tokens;
+	protected $fixer;
+
+	public function setFile(File $phpcsFile)
+	{
+		$this->file   = $phpcsFile;
+		$this->tokens = $phpcsFile->getTokens();
+		$this->fixer  = $phpcsFile->fixer;
+		return $this;
+	}
 
 	/**********************************************/
 	/******************** TABS ********************/
@@ -19,14 +30,13 @@ trait UtilityTrait
 	 *  2) se impostato nel ruleset.xml
 	 *  3) quello di default della funzione
 	 *
-	 * @param  File $phpcsFile
-	 * @param  int  $default
+	 * @param  int $default
 	 * @return int
 	 */
-	public function getTabWidth(File $phpcsFile, $default = 4)
+	public function getTabWidth($default = 4)
 	{
-		$tabW = (!empty($phpcsFile->config->tabWidth))
-			? $phpcsFile->config->tabWidth
+		$tabW = (!empty($this->file->config->tabWidth))
+			? $this->file->config->tabWidth
 			: $default
 		;
 
@@ -40,15 +50,13 @@ trait UtilityTrait
 	/**
 	 * Il ptr è valido?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isValid(File $phpcsFile, $ptr = null)
+	public function isValid($ptr = null)
 	{
-		$tokens = $phpcsFile->getTokens();
-		if (!is_null($ptr) && !empty($tokens) && !empty($tokens[$ptr])) {
-			$token = $tokens[$ptr];
+		if (!is_null($ptr) && !empty($this->tokens) && !empty($this->tokens[$ptr])) {
+			$token = $this->tokens[$ptr];
 			if (
 				isset($token["code"])
 				&& isset($token["content"])
@@ -66,15 +74,14 @@ trait UtilityTrait
 	/**
 	 * I $ptrs sono tutti validi?
 	 *
-	 * @param  File       $phpcsFile
 	 * @param  array|null $ptrs
 	 * @return boolean
 	 */
-	public function areValid(File $phpcsFile, $ptrs = null)
+	public function areValid($ptrs = null)
 	{
 		if (is_array($ptrs) && !empty($ptrs)) {
 			foreach ($ptrs as $ptr) {
-				if (!$this->isValid($phpcsFile, $ptr)) {
+				if (!$this->isValid($ptr)) {
 					return false;
 				}
 			}
@@ -92,21 +99,19 @@ trait UtilityTrait
 	/**
 	 * Stampa l'id e il token dei ptr passati
 	 * interrompendo l'esecuzione.
-	 * @param  File      $phpcsFile
+	 *
 	 * @param  int|array $ptrs
 	 * @param  boolean   $type
 	 * @return void
 	 */
-	public function dd(File $phpcsFile, $ptrs, $type = true)
+	public function dd($ptrs, $type = true)
 	{
-		$tokens = $phpcsFile->getTokens();
-
 		$ptrs = (is_numeric($ptrs)) ? array($ptrs) : $ptrs;
 		if (is_array($ptrs)) {
 			$tmp = array();
 			foreach ($ptrs as $ptr) {
-				if ($this->isValid($phpcsFile, $ptr)) {
-					$tmp[] = array_merge(array("ptr" => $ptr), $tokens[$ptr]);
+				if ($this->isValid($ptr)) {
+					$tmp[] = array_merge(array("ptr" => $ptr), $this->tokens[$ptr]);
 				} else {
 					$tmp[] = array("ptr" => $ptr, "error" => "invalid");
 				}
@@ -126,19 +131,18 @@ trait UtilityTrait
 	/**
 	 * Stampa l'id e il token dei ptr nell'intervallo
 	 * indicato interrompendo l'esecuzione.
-	 * @param  File $phpcsFile
+	 *
 	 * @param  int  $start
 	 * @param  int  $end
 	 * @return void
 	 */
-	public function ddi(File $phpcsFile, $start = null, $end = null, $type = true)
+	public function ddi($start = null, $end = null, $type = true)
 	{
-		if ($this->areValid($phpcsFile, array($start, $end))) {
-			$this->dd($phpcsFile, range($start, $end), $type);
+		if ($this->areValid(array($start, $end))) {
+			$this->dd(range($start, $end), $type);
 		}
 
 		die(var_dump("invalid interval: start = $start, end = $end"));
-
 	}
 
 	/**********************************************/
@@ -147,16 +151,15 @@ trait UtilityTrait
 
 	/**
 	 * Il tipo del token è tra quelli passati?
-	 * @param  File  $phpcsFile
+	 *
 	 * @param  array $types
 	 * @param  int   $ptr
 	 * @return boolean
 	 */
-	private function isType(File $phpcsFile, $types, $ptr = null)
+	private function isType($types, $ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			return in_array($tokens[$ptr]["code"], $types);
+		if ($this->isValid($ptr)) {
+			return in_array($this->tokens[$ptr]["code"], $types);
 		}
 
 		return false;
@@ -316,24 +319,22 @@ trait UtilityTrait
 	 *       il carattere di eol ma può anche
 	 *       essere che non ha solo quello
 	 *
-	 * @param  File    $phpcsFile
 	 * @param  int     $ptr
 	 * @param  boolean $strict contiene solo l'end-of-line?
 	 * @return boolean
 	 */
-	public function isEol(File $phpcsFile, $ptr, $strict = false)
+	public function isEol($ptr, $strict = false)
 	{
-		$tokens = $phpcsFile->getTokens();
-		if ($this->isValid($phpcsFile, $ptr)) {
+		if ($this->isValid($ptr)) {
 			if ($strict) {
-				$token = $tokens[$ptr];
+				$token = $this->tokens[$ptr];
 				return (
 					$token["code"] === T_WHITESPACE
-					&& $token["content"] === $phpcsFile->eolChar
+					&& $token["content"] === $this->file->eolChar
 					&& empty($token["length"])
 				);
 			} else {
-				return (substr($tokens[$ptr]["content"], -1) == $phpcsFile->eolChar);
+				return (substr($this->tokens[$ptr]["content"], -1) == $this->file->eolChar);
 			}
 		}
 
@@ -343,52 +344,46 @@ trait UtilityTrait
 	/**
 	 * E' un token di tipo start-of-line?
 	 *
-	 * @param  File    $phpcsFile
 	 * @param  int     $ptr
 	 * @return boolean
 	 */
-	public function isSol(File $phpcsFile, $ptr)
+	public function isSol($ptr)
 	{
-		$tokens = $phpcsFile->getTokens();
-		return ($this->isValid($phpcsFile, $ptr) && $tokens[$ptr]["column"] === 1);
+		return ($this->isValid($ptr) && $this->tokens[$ptr]["column"] === 1);
 	}
 
 	/**
 	 * E' un token di tipo virgola?
 	 *
-	 * @param  File    $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isComma(File $phpcsFile, $ptr = null)
+	public function isComma($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_COMMA), $ptr);
+		return $this->isType(array(T_COMMA), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo whitespace?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isWhitespace(File $phpcsFile, $ptr = null)
+	public function isWhitespace($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_WHITESPACE), $ptr);
+		return $this->isType(array(T_WHITESPACE), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo whitespace con uno spazio singolo?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isOneWhitespace(File $phpcsFile, $ptr = null)
+	public function isOneWhitespace($ptr = null)
 	{
-		if ($this->isWhitespace($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			return ($tokens[$ptr]["content"] == " ");
+		if ($this->isWhitespace($ptr)) {
+			return ($this->tokens[$ptr]["content"] == " ");
 		}
 
 		return false;
@@ -397,132 +392,121 @@ trait UtilityTrait
 	/**
 	 * E' un double arrow?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isDoubleArrow(File $phpcsFile, $ptr = null)
+	public function isDoubleArrow($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_DOUBLE_ARROW), $ptr);
+		return $this->isType(array(T_DOUBLE_ARROW), $ptr);
 	}
 
 	/**
 	 * E' l'operatore di chaining?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isObjectOperator(File $phpcsFile, $ptr = null)
+	public function isObjectOperator($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_OBJECT_OPERATOR), $ptr);
+		return $this->isType(array(T_OBJECT_OPERATOR), $ptr);
 	}
 
 	/**
 	 * E' l'operatore di concatenazione di stringa?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isConcatOperator(File $phpcsFile, $ptr = null)
+	public function isConcatOperator($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_STRING_CONCAT), $ptr);
+		return $this->isType(array(T_STRING_CONCAT), $ptr);
 	}
 
 	/**
 	 * E' una stringa?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isString(File $phpcsFile, $ptr = null)
+	public function isString($ptr = null)
 	{
-		return $this->isType($phpcsFile, Tokens::$stringTokens, $ptr);
+		return $this->isType(Tokens::$stringTokens, $ptr);
 	}
 
 	/**
 	 * E' il punto e virgola?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isSemicolon(File $phpcsFile, $ptr = null)
+	public function isSemicolon($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_SEMICOLON), $ptr);
+		return $this->isType(array(T_SEMICOLON), $ptr);
 	}
 
 	/**
 	 * E' il carattere ":"?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isColon(File $phpcsFile, $ptr = null)
+	public function isColon($ptr = null)
 	{
-		return $this->isType($phpcsFile, array(T_COLON), $ptr);
+		return $this->isType(array(T_COLON), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo "codice non valido" (spazi o commenti)?
 	 *
-	 * @param  File    $phpcsFile
 	 * @param  int     $ptr
 	 * @return boolean
 	 */
-	public function isNoCode(File $phpcsFile, $ptr = null)
+	public function isNoCode($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getNoCode(), $ptr);
+		return $this->isType($this->getNoCode(), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo assegnazione?
 	 *
-	 * @param  File    $phpcsFile
 	 * @param  int     $ptr
 	 * @return boolean
 	 */
-	public function isAssignment(File $phpcsFile, $ptr = null)
+	public function isAssignment($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getAssignment(), $ptr);
+		return $this->isType($this->getAssignment(), $ptr);
 	}
 
 	/**
 	 * E' un token di apertura blocco?
 	 *
-	 * @param  File    $phpcsFile
 	 * @param  int     $ptr
 	 * @return boolean
 	 */
-	public function isBlockOpener(File $phpcsFile, $ptr = null)
+	public function isBlockOpener($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getBlockOpeners(), $ptr);
+		return $this->isType($this->getBlockOpeners(), $ptr);
 	}
 
 	/**
 	 * E' un token di chiusura blocco?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isCloseBracket(File $phpcsFile, $ptr = null)
+	public function isCloseBracket($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getCloseBrackets(), $ptr);
+		return $this->isType($this->getCloseBrackets(), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo commento?
 	 *
-	 * @param  File        $phpcsFile
 	 * @param  int|null    $ptr
 	 * @param  null|string $type oneline, multiline or both
 	 * @return boolean
 	 */
-	public function isComment(File $phpcsFile, $ptr = null, $type = null)
+	public function isComment($ptr = null, $type = null)
 	{
 		$types   = array_diff($this->getComments(), Tokens::$phpcsCommentTokens);
 		$oneline = array(T_COMMENT);
@@ -537,79 +521,73 @@ trait UtilityTrait
 				break;
 		}
 
-		return $this->isType($phpcsFile, $types, $ptr);
+		return $this->isType($types, $ptr);
 	}
 
 	/**
 	 * E' un token di tipo operatore?
 	 *
-	 * @param  File  $phpcsFile
 	 * @param  int   $ptr
 	 * @return boolean
 	 */
-	public function isOperator(File $phpcsFile, $ptr = null)
+	public function isOperator($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getOperators(), $ptr);
+		return $this->isType($this->getOperators(), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo operatore booleano?
 	 *
-	 * @param  File  $phpcsFile
 	 * @param  int   $ptr
 	 * @return boolean
 	 */
-	public function isBooleanOperator(File $phpcsFile, $ptr = null)
+	public function isBooleanOperator($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getBooleanOperators(), $ptr);
+		return $this->isType($this->getBooleanOperators(), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo operatore aritmetico?
 	 *
-	 * @param  File  $phpcsFile
 	 * @param  int   $ptr
 	 * @return boolean
 	 */
-	public function isArithmeticOperator(File $phpcsFile, $ptr = null)
+	public function isArithmeticOperator($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getArithmeticOperators(), $ptr);
+		return $this->isType($this->getArithmeticOperators(), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo operatore ternario?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isTernary(File $phpcsFile, $ptr = null)
+	public function isTernary($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getTernary(), $ptr);
+		return $this->isType($this->getTernary(), $ptr);
 	}
 
 	/**
 	 * E' un token di tipo array?
 	 *
-	 * @param  File      $phpcsFile
 	 * @param  int |null $ptr
 	 * @return boolean
 	 */
-	public function isArray(File $phpcsFile, $ptr = null)
+	public function isArray($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getArrays(), $ptr);
+		return $this->isType($this->getArrays(), $ptr);
 	}
 
 	/**
 	 * E' un token tipo "case" o "default"?
 	 *
-	 * @param  File      $phpcsFile
 	 * @param  int |null $ptr
 	 * @return boolean
 	 */
-	public function isSwitchKeyword(File $phpcsFile, $ptr = null)
+	public function isSwitchKeyword($ptr = null)
 	{
-		return $this->isType($phpcsFile, $this->getSwitchKeywords(), $ptr);
+		return $this->isType($this->getSwitchKeywords(), $ptr);
 	}
 
 	/**********************************************/
@@ -624,22 +602,18 @@ trait UtilityTrait
 	 *    allora il token restituito sarà proprio $start
 	 *  - se il token $end è null allora cerca fino alla fine, altrimenti fino a $end
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int      $start
 	 * @param  int|null $end
 	 * @return int|null
 	 */
-	public function nextCode(File $phpcsFile, $start, $end = null)
+	public function nextCode($start, $end = null)
 	{
 		$nvc = null;
-		if ($this->isValid($phpcsFile, $start)) {
-			if (
-				(is_numeric($end) && $end > $start)
-				|| is_null($end)
-			) {
+		if ($this->isValid($start)) {
+			if ((is_numeric($end) && $end > $start) || is_null($end)) {
 				$end = (is_numeric($end)) ? $end + 1 : null;
-				$nvc = $phpcsFile->findNext($this->getNoCode(), $start, $end, true);
-			} elseif ($end === $start && !$this->isNoCode($phpcsFile, $start)) {
+				$nvc = $this->file->findNext($this->getNoCode(), $start, $end, true);
+			} elseif ($end === $start && !$this->isNoCode($start)) {
 				$nvc = $start;
 			}
 		}
@@ -654,22 +628,18 @@ trait UtilityTrait
 	 *    allora il token restituito sarà proprio $start
 	 *  - se il token $end è null allora cerca a ritroso fino all'inizio, altrimenti fino a $end
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int      $start
 	 * @param  int|null $end
 	 * @return int|null
 	 */
-	public function prevCode(File $phpcsFile, $start, $end = null)
+	public function prevCode($start, $end = null)
 	{
 		$pvc = null;
-		if ($this->isValid($phpcsFile, $start)) {
-			if (
-				(is_numeric($end) && $end < $start)
-				|| is_null($end)
-			) {
+		if ($this->isValid($start)) {
+			if ((is_numeric($end) && $end < $start) || is_null($end)) {
 				$end = (is_numeric($end)) ? $end - 1 : null;
-				$pvc = $phpcsFile->findPrevious($this->getNoCode(), $start, $end, true);
-			} elseif ($end === $start && !$this->isNoCode($phpcsFile, $start)) {
+				$pvc = $this->file->findPrevious($this->getNoCode(), $start, $end, true);
+			} elseif ($end === $start && !$this->isNoCode($start)) {
 				$pvc = $start;
 			}
 		}
@@ -684,22 +654,19 @@ trait UtilityTrait
 	 *  - il token $start è compreso nella ricerca quindi, se è già un commento,
 	 *    allora il token restituito sarà proprio $start
 	 *  - se il token $end è null allora cerca a ritroso fino all'inizio, altrimenti fino a $end
-	 * @param  File     $phpcsFile
+	 *
 	 * @param  int      $start
 	 * @param  int|null $end
 	 * @return int|null
 	 */
-	public function prevComment(File $phpcsFile, $start, $end = null)
+	public function prevComment($start, $end = null)
 	{
 		$prev = null;
-		if ($this->isValid($phpcsFile, $start)) {
-			if (
-				(is_numeric($end) && $end < $start)
-				|| is_null($end)
-			) {
+		if ($this->isValid($start)) {
+			if ((is_numeric($end) && $end < $start) || is_null($end)) {
 				$end  = (is_numeric($end)) ? $end - 1 : null;
-				$prev = $phpcsFile->findPrevious($this->getComments(), $start, $end);
-			} elseif ($end === $start && !$this->isComment($phpcsFile, $start)) {
+				$prev = $this->file->findPrevious($this->getComments(), $start, $end);
+			} elseif ($end === $start && !$this->isComment($start)) {
 				$prev = $start;
 			}
 		}
@@ -714,16 +681,15 @@ trait UtilityTrait
 	/**
 	 * Trovami il token start-of-line della riga dove sta il token $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function findSol(File $phpcsFile, $ptr = null)
+	public function findSol($ptr = null)
 	{
 		$sol = null;
-		if ($this->isValid($phpcsFile, $ptr)) {
+		if ($this->isValid($ptr)) {
 			$sol = $ptr;
-			while ($this->isValid($phpcsFile, $sol - 1) && !$this->isSol($phpcsFile, $sol)) {
+			while ($this->isValid($sol - 1) && !$this->isSol($sol)) {
 				$sol--;
 			}
 		}
@@ -734,16 +700,15 @@ trait UtilityTrait
 	/**
 	 * Trovami il token end-of-line della riga dove sta il token $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function findEol(File $phpcsFile, $ptr = null)
+	public function findEol($ptr = null)
 	{
 		$eol = null;
-		if ($this->isValid($phpcsFile, $ptr)) {
+		if ($this->isValid($ptr)) {
 			$eol = $ptr;
-			while ($this->isValid($phpcsFile, $eol + 1) && !$this->isEol($phpcsFile, $eol)) {
+			while ($this->isValid($eol + 1) && !$this->isEol($eol)) {
 				$eol++;
 			}
 		}
@@ -754,19 +719,18 @@ trait UtilityTrait
 	/**
 	 * Trovami l'ultimo token di tipo codice (end-code-of-line) sulla riga dove sta il token $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function findEcol(File $phpcsFile, $ptr = null)
+	public function findEcol($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$sol = $this->findSol($phpcsFile, $ptr);
-			$eol = $this->findEol($phpcsFile, $ptr);
+		if ($this->isValid($ptr)) {
+			$sol = $this->findSol($ptr);
+			$eol = $this->findEol($ptr);
 
 			if (!is_null($sol) && !is_null($eol)) {
 				for ($i = $eol; $i >= $sol; $i--) {
-					if (!$this->isNoCode($phpcsFile, $i)) {
+					if (!$this->isNoCode($i)) {
 						return $i;
 					}
 				}
@@ -777,18 +741,17 @@ trait UtilityTrait
 	/**
 	 * Trovami il primo token di tipo codice (start-code-of-line) sulla riga dove sta il token $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function findScol(File $phpcsFile, $ptr = null)
+	public function findScol($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$sol = $this->findSol($phpcsFile, $ptr);
-			$eol = $this->findEol($phpcsFile, $ptr);
+		if ($this->isValid($ptr)) {
+			$sol = $this->findSol($ptr);
+			$eol = $this->findEol($ptr);
 			if (!is_null($sol) && !is_null($eol)) {
 				for ($i = $sol; $i <= $eol; $i++) {
-					if (!$this->isNoCode($phpcsFile, $i)) {
+					if (!$this->isNoCode($i)) {
 						return $i;
 					}
 				}
@@ -799,13 +762,12 @@ trait UtilityTrait
 	/**
 	 * $ptr è il primo codice della riga?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isScol(File $phpcsFile, $ptr = null)
+	public function isScol($ptr = null)
 	{
-		$scol = $this->findScol($phpcsFile, $ptr);
+		$scol = $this->findScol($ptr);
 		return (!is_null($scol) && $ptr === $scol);
 	}
 
@@ -813,17 +775,16 @@ trait UtilityTrait
 	 * Trovami il start-code-of-line partendo
 	 * dalla riga precedente a $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function prevScol(File $phpcsFile, $ptr = null)
+	public function prevScol($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$scol = $this->findScol($phpcsFile, $ptr);
+		if ($this->isValid($ptr)) {
+			$scol = $this->findScol($ptr);
 			if (!is_null($scol)) {
 				for ($i = $scol - 1; $i >= 0; $i--) {
-					if ($this->isScol($phpcsFile, $i)) {
+					if ($this->isScol($i)) {
 						return $i;
 					}
 				}
@@ -835,17 +796,16 @@ trait UtilityTrait
 	 * Trovami il end-code-of-line partendo
 	 * dalla riga precedente a $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function prevEcol(File $phpcsFile, $ptr = null)
+	public function prevEcol($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$scol = $this->findScol($phpcsFile, $ptr);
+		if ($this->isValid($ptr)) {
+			$scol = $this->findScol($ptr);
 			if (!is_null($scol)) {
 				for ($i = $scol - 1; $i >= 0; $i--) {
-					if (!$this->isNoCode($phpcsFile, $i)) {
+					if (!$this->isNoCode($i)) {
 						return $i;
 					}
 				}
@@ -860,15 +820,13 @@ trait UtilityTrait
 	/**
 	 * Quanto è lungo il token $ptr?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int
 	 */
-	public function getLength(File $phpcsFile, $ptr = null)
+	public function getLength($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			return $tokens[$ptr]["length"];
+		if ($this->isValid($ptr)) {
+			return $this->tokens[$ptr]["length"];
 		}
 
 		return 0;
@@ -877,15 +835,13 @@ trait UtilityTrait
 	/**
 	 * Di quante "unità" sta dentro il token $ptr?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int
 	 */
-	public function getUnits(File $phpcsFile, $ptr = null)
+	public function getUnits($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			return $tokens[$ptr]["column"] - 1;
+		if ($this->isValid($ptr)) {
+			return $this->tokens[$ptr]["column"] - 1;
 		}
 
 		return 0;
@@ -897,15 +853,14 @@ trait UtilityTrait
 	 * Nota: l'indentazione comprende solo gli spazi bianchi
 	 *       partendo dal start-code-of-line di $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int
 	 */
-	public function getWhitespaces(File $phpcsFile, $ptr = null)
+	public function getWhitespaces($ptr = null)
 	{
-		$scol = $this->findScol($phpcsFile, $ptr);
+		$scol = $this->findScol($ptr);
 		if (!is_null($scol)) {
-			return $this->getUnits($phpcsFile, $scol);
+			return $this->getUnits($scol);
 		}
 
 		return 0;
@@ -914,15 +869,14 @@ trait UtilityTrait
 	/**
 	 * Quanto è lunga la riga dove sta il token $ptr?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int
 	 */
-	public function getLineLength(File $phpcsFile, $ptr = null)
+	public function getLineLength($ptr = null)
 	{
-		$eol = $this->findEol($phpcsFile, $ptr);
+		$eol = $this->findEol($ptr);
 		if (!is_null($eol)) {
-			return $this->getUnits($phpcsFile, $eol) + $this->getLength($phpcsFile, $eol);
+			return $this->getUnits($eol) + $this->getLength($eol);
 		}
 
 		return 0;
@@ -931,16 +885,14 @@ trait UtilityTrait
 	/**
 	 * I due token stanno sulla stessa riga?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr1
 	 * @param  int|null $ptr2
 	 * @return boolean
 	 */
-	public function isSameLine(File $phpcsFile, $ptr1 = null, $ptr2 = null)
+	public function isSameLine($ptr1 = null, $ptr2 = null)
 	{
-		if ($this->areValid($phpcsFile, array($ptr1, $ptr2))) {
-			$tokens = $phpcsFile->getTokens();
-			return ($tokens[$ptr1]["line"] === $tokens[$ptr2]["line"]);
+		if ($this->areValid(array($ptr1, $ptr2))) {
+			return ($this->tokens[$ptr1]["line"] === $this->tokens[$ptr2]["line"]);
 		}
 
 		return false;
@@ -949,13 +901,12 @@ trait UtilityTrait
 	/**
 	 * La riga dove sta $ptr è vuota?
 	 *
-	 * @param  File     $phpcsFile
-	 * @param  int|null $ptr
+	 * @param int|null $ptr
 	 */
-	public function isEmptyLine(File $phpcsFile, $ptr = null)
+	public function isEmptyLine($ptr = null)
 	{
-		$scol = $this->findScol($phpcsFile, $ptr);
-		$ecol = $this->findEcol($phpcsFile, $ptr);
+		$scol = $this->findScol($ptr);
+		$ecol = $this->findEcol($ptr);
 
 		return (is_null($scol) && is_null($ecol));
 	}
@@ -963,15 +914,13 @@ trait UtilityTrait
 	/**
 	 * Dammi l'opener
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function getOpener(File $phpcsFile, $ptr = null)
+	public function getOpener($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isCloseBracket($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			$token  = $tokens[$ptr];
+		if ($this->isValid($ptr) && $this->isCloseBracket($ptr)) {
+			$token = $this->tokens[$ptr];
 			if (isset($token["parenthesis_opener"])) {
 				return $token["parenthesis_opener"];
 			} elseif (isset($token["bracket_opener"])) {
@@ -983,15 +932,13 @@ trait UtilityTrait
 	/**
 	 * Dammi il closer
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function getCloser(File $phpcsFile, $ptr = null)
+	public function getCloser($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && $this->isBlockOpener($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			$token  = $tokens[$ptr];
+		if ($this->isValid($ptr) && $this->isBlockOpener($ptr)) {
+			$token = $this->tokens[$ptr];
 			if (isset($token["parenthesis_closer"])) {
 				return $token["parenthesis_closer"];
 			} elseif (isset($token["bracket_closer"])) {
@@ -1007,15 +954,13 @@ trait UtilityTrait
 	/**
 	 * E' un array in notazione short ?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isShortArray(File $phpcsFile, $ptr = null)
+	public function isShortArray($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			return ($tokens[$ptr]["code"] === T_OPEN_SHORT_ARRAY);
+		if ($this->isArray($ptr)) {
+			return ($this->tokens[$ptr]["code"] === T_OPEN_SHORT_ARRAY);
 		}
 
 		return false;
@@ -1024,15 +969,13 @@ trait UtilityTrait
 	/**
 	 * E' un array in notazione long ?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isLongArray(File $phpcsFile, $ptr = null)
+	public function isLongArray($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			return ($tokens[$ptr]["code"] === T_ARRAY);
+		if ($this->isArray($ptr)) {
+			return ($this->tokens[$ptr]["code"] === T_ARRAY);
 		}
 
 		return false;
@@ -1041,17 +984,15 @@ trait UtilityTrait
 	/**
 	 * Dammi il token con la parentesi di apertura dell'array.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function getArrayOpenParenthesis(File $phpcsFile, $ptr = null)
+	public function getArrayOpenParenthesis($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			if ($this->isLongArray($phpcsFile, $ptr)) {
-				return $tokens[$ptr]["parenthesis_opener"];
-			} elseif ($this->isShortArray($phpcsFile, $ptr)) {
+		if ($this->isArray($ptr)) {
+			if ($this->isLongArray($ptr)) {
+				return $this->tokens[$ptr]["parenthesis_opener"];
+			} elseif ($this->isShortArray($ptr)) {
 				return $ptr;
 			}
 		}
@@ -1060,19 +1001,17 @@ trait UtilityTrait
 	/**
 	 * Dammi il token con la parentesi di chiusura dell'array.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function getArrayCloseParenthesis(File $phpcsFile, $ptr = null)
+	public function getArrayCloseParenthesis($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-			$open   = $this->getArrayOpenParenthesis($phpcsFile, $ptr);
-			if ($this->isLongArray($phpcsFile, $ptr)) {
-				return $tokens[$open]["parenthesis_closer"];
-			} elseif ($this->isShortArray($phpcsFile, $ptr)) {
-				return $tokens[$open]["bracket_closer"];
+		if ($this->isArray($ptr)) {
+			$open = $this->getArrayOpenParenthesis($ptr);
+			if ($this->isLongArray($ptr)) {
+				return $this->tokens[$open]["parenthesis_closer"];
+			} elseif ($this->isShortArray($ptr)) {
+				return $this->tokens[$open]["bracket_closer"];
 			}
 		}
 	}
@@ -1080,18 +1019,17 @@ trait UtilityTrait
 	/**
 	 * E' un array single-line?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isSingleLineArray(File $phpcsFile, $ptr = null)
+	public function isSingleLineArray($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$open  = $this->getArrayOpenParenthesis($phpcsFile, $ptr);
-			$close = $this->getArrayCloseParenthesis($phpcsFile, $ptr);
+		if ($this->isArray($ptr)) {
+			$open  = $this->getArrayOpenParenthesis($ptr);
+			$close = $this->getArrayCloseParenthesis($ptr);
 
 			if (!is_null($open) && !is_null($close) && $close > $open) {
-				return ($this->isSameLine($phpcsFile, $open, $close));
+				return ($this->isSameLine($open, $close));
 			}
 		}
 
@@ -1101,18 +1039,17 @@ trait UtilityTrait
 	/**
 	 * E' un array multi-line?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isMultiLineArray(File $phpcsFile, $ptr = null)
+	public function isMultiLineArray($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$open  = $this->getArrayOpenParenthesis($phpcsFile, $ptr);
-			$close = $this->getArrayCloseParenthesis($phpcsFile, $ptr);
+		if ($this->isArray($ptr)) {
+			$open  = $this->getArrayOpenParenthesis($ptr);
+			$close = $this->getArrayCloseParenthesis($ptr);
 
 			if (!is_null($open) && !is_null($close) && $close > $open) {
-				return (!$this->isSameLine($phpcsFile, $open, $close));
+				return (!$this->isSameLine($open, $close));
 			}
 		}
 
@@ -1122,18 +1059,17 @@ trait UtilityTrait
 	/**
 	 * E' un array senza codice valido all'interno?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isEmptyArray(File $phpcsFile, $ptr = null)
+	public function isEmptyArray($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr)) {
-			$open  = $this->getArrayOpenParenthesis($phpcsFile, $ptr);
-			$close = $this->getArrayCloseParenthesis($phpcsFile, $ptr);
+		if ($this->isArray($ptr)) {
+			$open  = $this->getArrayOpenParenthesis($ptr);
+			$close = $this->getArrayCloseParenthesis($ptr);
 
 			if (!is_null($open) && !is_null($close) && $close > $open) {
-				$nextCode = $this->nextCode($phpcsFile, $open + 1, $close);
+				$nextCode = $this->nextCode($open + 1, $close);
 				return ($nextCode === $close);
 			}
 		}
@@ -1145,24 +1081,22 @@ trait UtilityTrait
 	 * Dammi le doppie frecce "valide" (quelle che stanno tra chiave e valore
 	 * degli elementi dell'array, non quelle innestate insomma).
 	 *
-	 * @param  File       $phpcsFile
 	 * @param  int|null   $ptr
 	 * @return array|null array con i token delle doppie frecce "valide"
 	 */
-	public function getArrayValidDoubleArrows(File $phpcsFile, $ptr = null)
+	public function getArrayValidDoubleArrows($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr) && !$this->isEmptyArray($phpcsFile, $ptr)) {
-			$open   = $this->getArrayOpenParenthesis($phpcsFile, $ptr);
-			$close  = $this->getArrayCloseParenthesis($phpcsFile, $ptr);
+		if ($this->isArray($ptr) && !$this->isEmptyArray($ptr)) {
+			$open  = $this->getArrayOpenParenthesis($ptr);
+			$close = $this->getArrayCloseParenthesis($ptr);
 			if (!is_null($open) && !is_null($close) && $close > $open) {
 				$arrows = array();
-				$tokens = $phpcsFile->getTokens();
 				for ($i = ($open + 1); $i < $close; $i++) {
 					if (
-						$this->isDoubleArrow($phpcsFile, $i)
-						&& isset($tokens[$i]["nested_parenthesis"])
+						$this->isDoubleArrow($i)
+						&& isset($this->tokens[$i]["nested_parenthesis"])
 					) {
-						$keys = array_keys($tokens[$i]["nested_parenthesis"]);
+						$keys = array_keys($this->tokens[$i]["nested_parenthesis"]);
 						if (end($keys) === $open) {
 							$arrows[] = $i;
 						}
@@ -1178,21 +1112,19 @@ trait UtilityTrait
 	 * Dammi le virgole "valide" (quelle che delimitano gli elementi dell'array,
 	 * non innestate insomma).
 	 *
-	 * @param  File       $phpcsFile
 	 * @param  int|null   $ptr
 	 * @return array|null array con i token delle doppie frecce "valide"
 	 */
-	public function getArrayValidCommas(File $phpcsFile, $ptr = null)
+	public function getArrayValidCommas($ptr = null)
 	{
-		if ($this->isArray($phpcsFile, $ptr) && !$this->isEmptyArray($phpcsFile, $ptr)) {
-			$open   = $this->getArrayOpenParenthesis($phpcsFile, $ptr);
-			$close  = $this->getArrayCloseParenthesis($phpcsFile, $ptr);
+		if ($this->isArray($ptr) && !$this->isEmptyArray($ptr)) {
+			$open  = $this->getArrayOpenParenthesis($ptr);
+			$close = $this->getArrayCloseParenthesis($ptr);
 			if (!is_null($open) && !is_null($close) && $close > $open) {
 				$commas = array();
-				$tokens = $phpcsFile->getTokens();
 				for ($i = ($open + 1); $i < $close; $i++) {
-					if ($this->isComma($phpcsFile, $i)) {
-						$token = $tokens[$i];
+					if ($this->isComma($i)) {
+						$token = $this->tokens[$i];
 						if (isset($token["nested_parenthesis"])) {
 							$keys = array_keys($token["nested_parenthesis"]);
 						}
@@ -1202,7 +1134,7 @@ trait UtilityTrait
 							|| !isset($token["nested_parenthesis"])
 						) {
 							// escludo l'ultima virgola
-							$code = $this->nextCode($phpcsFile, ($i + 1), $close);
+							$code = $this->nextCode(($i + 1), $close);
 							if ($code !== $close) {
 								$commas[] = $i;
 							}
@@ -1222,14 +1154,13 @@ trait UtilityTrait
 	/**
 	 * è il primo operatore di chaining?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isFirstChaining(File $phpcsFile, $ptr = null)
+	public function isFirstChaining($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
-			$prev = $this->prevChain($phpcsFile, $ptr);
+		if ($this->isObjectOperator($ptr)) {
+			$prev = $this->prevChain($ptr);
 			if (is_null($prev)) {
 				return true;
 			}
@@ -1241,17 +1172,16 @@ trait UtilityTrait
 	/**
 	 * dammi il token che apre l'intero chaining
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function chainingStart(File $phpcsFile, $ptr = null)
+	public function chainingStart($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+		if ($this->isObjectOperator($ptr)) {
 			do {
-				$start = $this->startChain($phpcsFile, $ptr);
-				$ptr   = $this->prevChain($phpcsFile, $ptr);
-			} while ($this->isObjectOperator($phpcsFile, $ptr));
+				$start = $this->startChain($ptr);
+				$ptr   = $this->prevChain($ptr);
+			} while ($this->isObjectOperator($ptr));
 
 			return $start;
 		}
@@ -1265,20 +1195,19 @@ trait UtilityTrait
 	 * di apertura. Questo perché il chaining è considerato multiline
 	 * se ha almeno anche l'ultima parentesi di apertura a capo.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function chainingEnd(File $phpcsFile, $ptr = null)
+	public function chainingEnd($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
+		if ($this->isObjectOperator($ptr)) {
 			do {
-				$end = $this->endChain($phpcsFile, $ptr);
-				$ptr = $this->nextChain($phpcsFile, $ptr);
-			} while ($this->isObjectOperator($phpcsFile, $ptr));
+				$end = $this->endChain($ptr);
+				$ptr = $this->nextChain($ptr);
+			} while ($this->isObjectOperator($ptr));
 
-			if ($this->isCloseBracket($phpcsFile, $end)) {
-				return $this->getOpener($phpcsFile, $end);
+			if ($this->isCloseBracket($end)) {
+				return $this->getOpener($end);
 			}
 
 			return $end;
@@ -1288,40 +1217,40 @@ trait UtilityTrait
 	/**
 	 * dammi il token che apre il chaining di $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function startChain(File $phpcsFile, $ptr = null)
+	public function startChain($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
-			$sos    = $phpcsFile->findStartOfStatement($ptr);
-			$prev1  = $this->prevCode($phpcsFile, $ptr - 1, $sos);
-			if ($this->isCloseBracket($phpcsFile, $prev1)) {
-				$opener = $this->getOpener($phpcsFile, $prev1);
-				$prev1  = $this->prevCode($phpcsFile, $opener - 1, $sos);
+		if ($this->isObjectOperator($ptr)) {
+			$sos    = $this->file->findStartOfStatement($ptr);
+			$prev1  = $this->prevCode($ptr - 1, $sos);
+			if ($this->isCloseBracket($prev1)) {
+				$opener = $this->getOpener($prev1);
+				$prev1  = $this->prevCode($opener - 1, $sos);
 			}
 
-			$tokens = $phpcsFile->getTokens();
-			return in_array($tokens[$prev1]["code"], array(T_STRING, T_VARIABLE)) ? $prev1 : $sos;
+			return in_array($this->tokens[$prev1]["code"], array(T_STRING, T_VARIABLE))
+				? $prev1
+				: $sos
+			;
 		}
 	}
 
 	/**
 	 * dammi il chaining operator precedente a $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function prevChain(File $phpcsFile, $ptr = null)
+	public function prevChain($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
-			$startPtrChain = $this->startChain($phpcsFile, $ptr);
-			if ($this->isValid($phpcsFile, $startPtrChain)) {
-				$sos     = $phpcsFile->findStartOfStatement($ptr);
-				$prevOpr = $this->prevCode($phpcsFile, $startPtrChain - 1, $sos);
-				if ($this->isObjectOperator($phpcsFile, $prevOpr)) {
+		if ($this->isObjectOperator($ptr)) {
+			$startPtrChain = $this->startChain($ptr);
+			if ($this->isValid($startPtrChain)) {
+				$sos     = $this->file->findStartOfStatement($ptr);
+				$prevOpr = $this->prevCode($startPtrChain - 1, $sos);
+				if ($this->isObjectOperator($prevOpr)) {
 					return $prevOpr;
 				}
 			}
@@ -1331,20 +1260,18 @@ trait UtilityTrait
 	/**
 	 * dammi il token che chiude il chaining di $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function endChain(File $phpcsFile, $ptr = null)
+	public function endChain($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
-			$eos    = $phpcsFile->findEndOfStatement($ptr);
-			$next1  = $this->nextCode($phpcsFile, $ptr + 1, $eos);
-			$tokens = $phpcsFile->getTokens();
-			if (in_array($tokens[$next1]["code"], array(T_STRING, T_VARIABLE))) {
-				$next2 = $this->nextCode($phpcsFile, $next1 + 1, $eos);
-				if ($this->isBlockOpener($phpcsFile, $next2)) {
-					return $this->getCloser($phpcsFile, $next2);
+		if ($this->isObjectOperator($ptr)) {
+			$eos    = $this->file->findEndOfStatement($ptr);
+			$next1  = $this->nextCode($ptr + 1, $eos);
+			if (in_array($this->tokens[$next1]["code"], array(T_STRING, T_VARIABLE))) {
+				$next2 = $this->nextCode($next1 + 1, $eos);
+				if ($this->isBlockOpener($next2)) {
+					return $this->getCloser($next2);
 				} else {
 					return $next1;
 				}
@@ -1355,22 +1282,45 @@ trait UtilityTrait
 	/**
 	 * dammi il chaining operator successivo a $ptr
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return int|null
 	 */
-	public function nextChain(File $phpcsFile, $ptr = null)
+	public function nextChain($ptr = null)
 	{
-		if ($this->isObjectOperator($phpcsFile, $ptr)) {
-			$endPtrChain = $this->endChain($phpcsFile, $ptr);
-			if ($this->isValid($phpcsFile, $endPtrChain)) {
-				$eos     = $phpcsFile->findEndOfStatement($ptr);
-				$nextOpr = $this->nextCode($phpcsFile, $endPtrChain + 1, $eos);
-				if ($this->isObjectOperator($phpcsFile, $nextOpr)) {
+		if ($this->isObjectOperator($ptr)) {
+			$endPtrChain = $this->endChain($ptr);
+			if ($this->isValid($endPtrChain)) {
+				$eos     = $this->file->findEndOfStatement($ptr);
+				$nextOpr = $this->nextCode($endPtrChain + 1, $eos);
+				if ($this->isObjectOperator($nextOpr)) {
 					return $nextOpr;
 				}
 			}
 		}
+	}
+
+	/**
+	 * il chaining di $ptr sta dentro un array?
+	 *
+	 * @param  int|null $ptr
+	 * @return boolean
+	 */
+	public function isInArray($ptr = null)
+	{
+		if ($this->isObjectOperator($ptr)) {
+			if (isset($this->tokens[$ptr]["nested_parenthesis"])) {
+				$parenthesis = array_keys($this->tokens[$ptr]["nested_parenthesis"]);
+				$opener      = end($parenthesis);
+				if ($this->isBlockOpener($opener)) {
+					$prevCode = $this->prevCode($opener - 1);
+					if ($this->isArray($prevCode)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**********************************************/
@@ -1380,27 +1330,25 @@ trait UtilityTrait
 	/**
 	 * $ptr è minuscolo?
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function toLowercase(File $phpcsFile, $ptr = null)
+	public function toLowercase($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && !$this->isNoCode($phpcsFile, $ptr)) {
-			$tokens   = $phpcsFile->getTokens();
-			$content  = $tokens[$ptr]["content"];
+		if ($this->isValid($ptr) && !$this->isNoCode($ptr)) {
+			$content  = $this->tokens[$ptr]["content"];
 			$expected = strtolower(trim($content));
 			if ($content !== $expected) {
-				$fix = $phpcsFile->addFixableError(
+				$fix = $this->file->addFixableError(
 					"It should be lowercase: expected \"%s\" but found \"%s\"",
 					$ptr,
 					"NotLowerCase",
 					array($expected, $content)
 				);
 				if ($fix === true) {
-					$phpcsFile->fixer->beginChangeset();
-					$phpcsFile->fixer->replaceToken($ptr, $expected);
-					$phpcsFile->fixer->endChangeset();
+					$this->fixer->beginChangeset();
+					$this->fixer->replaceToken($ptr, $expected);
+					$this->fixer->endChangeset();
 				}
 			}
 		}
@@ -1410,33 +1358,31 @@ trait UtilityTrait
 	 * $ptr deve avere uno e un solo spazio
 	 * tra lui e il successivo codice valido.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 */
-	public function oneSpaceAfter(File $phpcsFile, $ptr = null)
+	public function oneSpaceAfter($ptr = null)
 	{
-		if ($this->areValid($phpcsFile, array($ptr, $ptr + 1))) {
-			$nextCode = $this->nextCode($phpcsFile, $ptr + 1);
+		if ($this->areValid(array($ptr, $ptr + 1))) {
+			$nextCode = $this->nextCode($ptr + 1);
 			if (!is_null($nextCode)) {
-				if ($nextCode != $ptr + 2 || !$this->isOneWhitespace($phpcsFile, $ptr + 1)) {
-					$tokens = $phpcsFile->getTokens();
-					$fix    = $phpcsFile->addFixableError(
+				if ($nextCode != $ptr + 2 || !$this->isOneWhitespace($ptr + 1)) {
+					$fix = $this->file->addFixableError(
 						"One and only one space expected after \"%s\"",
 						$ptr,
 						"OneSpaceAfter",
-						array($tokens[$ptr]["content"])
+						array($this->tokens[$ptr]["content"])
 					);
 
 					if ($fix === true) {
-						$phpcsFile->fixer->beginChangeset();
+						$this->fixer->beginChangeset();
 						if ($nextCode > $ptr + 1) {
 							for ($i = $ptr + 1; $i < $nextCode; $i++) {
-								$phpcsFile->fixer->replaceToken($i, "");
+								$this->fixer->replaceToken($i, "");
 							}
 						}
 
-						$phpcsFile->fixer->addContent($ptr, " ");
-						$phpcsFile->fixer->endChangeset();
+						$this->fixer->addContent($ptr, " ");
+						$this->fixer->endChangeset();
 					}
 				}
 			}
@@ -1447,33 +1393,31 @@ trait UtilityTrait
 	 * $ptr deve avere uno e un solo spazio
 	 * tra lui e il precedente codice valido.
 	 *
-	 * @param  File     $phpcsFile
-	 * @param  int|null $ptr
+	 * @param int|null $ptr
 	 */
-	public function oneSpaceBefore(File $phpcsFile, $ptr = null)
+	public function oneSpaceBefore($ptr = null)
 	{
-		if ($this->areValid($phpcsFile, array($ptr, $ptr - 1))) {
-			$prevCode = $this->prevCode($phpcsFile, $ptr - 1);
+		if ($this->areValid(array($ptr, $ptr - 1))) {
+			$prevCode = $this->prevCode($ptr - 1);
 			if (!is_null($prevCode)) {
-				if ($prevCode != $ptr - 2 || !$this->isOneWhitespace($phpcsFile, $ptr - 1)) {
-					$tokens = $phpcsFile->getTokens();
-					$fix    = $phpcsFile->addFixableError(
+				if ($prevCode != $ptr - 2 || !$this->isOneWhitespace($ptr - 1)) {
+					$fix = $this->file->addFixableError(
 						"One and only one space expected before \"%s\"",
 						$ptr,
 						"OneSpaceBefore",
-						array($tokens[$ptr]["content"])
+						array($this->tokens[$ptr]["content"])
 					);
 
 					if ($fix === true) {
-						$phpcsFile->fixer->beginChangeset();
+						$this->fixer->beginChangeset();
 						if ($prevCode < $ptr - 1) {
 							for ($i = $ptr - 1; $i > $prevCode; $i--) {
-								$phpcsFile->fixer->replaceToken($i, "");
+								$this->fixer->replaceToken($i, "");
 							}
 						}
 
-						$phpcsFile->fixer->addContent($prevCode, " ");
-						$phpcsFile->fixer->endChangeset();
+						$this->fixer->addContent($prevCode, " ");
+						$this->fixer->endChangeset();
 					}
 				}
 			}
@@ -1484,42 +1428,39 @@ trait UtilityTrait
 	 * tra $ptr e il precedente e successivo
 	 * codice valido ci dev'essere solo uno spazio.
 	 *
-	 * @param  File     $phpcsFile
-	 * @param  int|null $ptr
+	 * @param int|null $ptr
 	 */
-	public function oneSpaceAround(File $phpcsFile, $ptr = null)
+	public function oneSpaceAround($ptr = null)
 	{
-		$this->oneSpaceBefore($phpcsFile, $ptr);
-		$this->oneSpaceAfter($phpcsFile, $ptr);
+		$this->oneSpaceBefore($ptr);
+		$this->oneSpaceAfter($ptr);
 	}
 
 	/**
 	 * $ptr non deve avere neanche uno spazio dopo.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 */
-	public function noWhitespaceAfter(File $phpcsFile, $ptr = null)
+	public function noWhitespaceAfter($ptr = null)
 	{
-		if ($this->areValid($phpcsFile, array($ptr, $ptr + 1))) {
-			$nextCode = $this->nextCode($phpcsFile, $ptr + 1);
+		if ($this->areValid(array($ptr, $ptr + 1))) {
+			$nextCode = $this->nextCode($ptr + 1);
 			if (!is_null($nextCode) && $nextCode != $ptr + 1) {
-				$tokens = $phpcsFile->getTokens();
-				$fix    = $phpcsFile->addFixableError(
+				$fix = $this->file->addFixableError(
 					"No space expected after \"%s\"",
 					$ptr,
 					"NoSpaceAfter",
-					array($tokens[$ptr]["content"])
+					array($this->tokens[$ptr]["content"])
 				);
 
 				if ($fix === true) {
-					$phpcsFile->fixer->beginChangeset();
+					$this->fixer->beginChangeset();
 					if ($nextCode > $ptr + 1) {
 						for ($i = $ptr + 1; $i < $nextCode; $i++) {
-							$phpcsFile->fixer->replaceToken($i, "");
+							$this->fixer->replaceToken($i, "");
 						}
 					}
-					$phpcsFile->fixer->endChangeset();
+					$this->fixer->endChangeset();
 				}
 			}
 		}
@@ -1528,30 +1469,28 @@ trait UtilityTrait
 	/**
 	 * $ptr non deve avere neanche uno spazio prima.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 */
-	public function noWhitespaceBefore(File $phpcsFile, $ptr = null)
+	public function noWhitespaceBefore($ptr = null)
 	{
-		if ($this->areValid($phpcsFile, array($ptr, $ptr - 1))) {
-			$prevCode = $this->prevCode($phpcsFile, $ptr - 1);
+		if ($this->areValid(array($ptr, $ptr - 1))) {
+			$prevCode = $this->prevCode($ptr - 1);
 			if (!is_null($prevCode) && $prevCode != $ptr - 1) {
-				$tokens = $phpcsFile->getTokens();
-				$fix    = $phpcsFile->addFixableError(
+				$fix = $this->file->addFixableError(
 					"No space expected before \"%s\"",
 					$ptr,
 					"NoSpaceBefore",
-					array($tokens[$ptr]["content"])
+					array($this->tokens[$ptr]["content"])
 				);
 
 				if ($fix === true) {
-					$phpcsFile->fixer->beginChangeset();
+					$this->fixer->beginChangeset();
 					if ($prevCode < $ptr - 1) {
 						for ($i = $ptr - 1; $i > $prevCode; $i--) {
-							$phpcsFile->fixer->replaceToken($i, "");
+							$this->fixer->replaceToken($i, "");
 						}
 					}
-					$phpcsFile->fixer->endChangeset();
+					$this->fixer->endChangeset();
 				}
 			}
 		}
@@ -1560,27 +1499,22 @@ trait UtilityTrait
 	/**
 	 * $ptr deve avere un eolChar dopo.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 */
-	public function oneEolAfter(File $phpcsFile, $ptr = null)
+	public function oneEolAfter($ptr = null)
 	{
-		if (
-			$this->areValid($phpcsFile, array($ptr, $ptr + 1))
-			&& !$this->isEol($phpcsFile, $ptr + 1, true)
-		) {
-			$tokens = $phpcsFile->getTokens();
-			$fix    = $phpcsFile->addFixableError(
+		if ($this->areValid(array($ptr, $ptr + 1)) && !$this->isEol($ptr + 1, true)) {
+			$fix = $this->file->addFixableError(
 				"After \"%s\" is expected only the eol",
 				$ptr,
 				"OneEolAfter",
-				array($tokens[$ptr]["content"])
+				array($this->tokens[$ptr]["content"])
 			);
 
 			if ($fix === true) {
-				$phpcsFile->fixer->beginChangeset();
-				$phpcsFile->fixer->addNewline($ptr);
-				$phpcsFile->fixer->endChangeset();
+				$this->fixer->beginChangeset();
+				$this->fixer->addNewline($ptr);
+				$this->fixer->endChangeset();
 			}
 		}
 	}
@@ -1588,25 +1522,22 @@ trait UtilityTrait
 	/**
 	 * $ptr deve essere il primo codice valido della riga.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 */
-	public function startCodeOfLine(File $phpcsFile, $ptr = null)
+	public function startCodeOfLine($ptr = null)
 	{
-		if ($this->isValid($phpcsFile, $ptr) && !$this->isScol($phpcsFile, $ptr)) {
-			$tokens = $phpcsFile->getTokens();
-
-			$fix = $phpcsFile->addFixableError(
+		if ($this->isValid($ptr) && !$this->isScol($ptr)) {
+			$fix = $this->file->addFixableError(
 				"\"%s\" is expected the first code in this line",
 				$ptr,
 				"FirstLineCode",
-				array($tokens[$ptr]["content"])
+				array($this->tokens[$ptr]["content"])
 			);
 
 			if ($fix === true) {
-				$phpcsFile->fixer->beginChangeset();
-				$phpcsFile->fixer->addNewlineBefore($ptr);
-				$phpcsFile->fixer->endChangeset();
+				$this->fixer->beginChangeset();
+				$this->fixer->addNewlineBefore($ptr);
+				$this->fixer->endChangeset();
 			}
 		}
 	}
@@ -1614,36 +1545,32 @@ trait UtilityTrait
 	/**
 	 * Se la riga dove sta $ptr è vuota, la rimuove.
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 */
-	public function removeEmptyLine(File $phpcsFile, $ptr = null)
+	public function removeEmptyLine($ptr = null)
 	{
-		if (
-			$this->isValid($phpcsFile, $ptr)
-			&& $this->isEmptyLine($phpcsFile, $ptr)
-		) {
+		if ($this->isValid($ptr) && $this->isEmptyLine($ptr)) {
 			// evito le closures
-			if ($phpcsFile->hasCondition($ptr, T_CLOSURE) === true) {
+			if ($this->file->hasCondition($ptr, T_CLOSURE) === true) {
 				return;
 			}
 
-			$sol = $this->findSol($phpcsFile, $ptr);
-			$eol = $this->findEol($phpcsFile, $ptr);
+			$sol = $this->findSol($ptr);
+			$eol = $this->findEol($ptr);
 
 			if (!is_null($sol) && !is_null($eol)) {
-				$fix = $phpcsFile->addFixableError(
+				$fix = $this->file->addFixableError(
 					"Empty rows is not admitted, to remove",
 					$ptr,
 					"NoEmptyLine"
 				);
 
 				if ($fix === true) {
-					$phpcsFile->fixer->beginChangeset();
+					$this->fixer->beginChangeset();
 					for ($i = $sol; $i <= $eol; $i++) {
-						$phpcsFile->fixer->replaceToken($i, "");
+						$this->fixer->replaceToken($i, "");
 					}
-					$phpcsFile->fixer->endChangeset();
+					$this->fixer->endChangeset();
 				}
 			}
 		}
@@ -1652,16 +1579,15 @@ trait UtilityTrait
 	/**
 	 * Rimuove le righe vuote tra $start e $end.
 	 *
-	 * @param  File $phpcsFile
 	 * @param  int  $start
 	 * @param  int  $end
 	 */
-	public function removeEmptyLines(File $phpcsFile, $start, $end)
+	public function removeEmptyLines($start, $end)
 	{
-		if ($this->areValid($phpcsFile, array($start, $end)) && $start < $end) {
+		if ($this->areValid(array($start, $end)) && $start < $end) {
 			for ($i = $start + 1; $i < $end; $i++) {
-				if ($this->isSol($phpcsFile, $i)) {
-					$this->removeEmptyLine($phpcsFile, $i);
+				if ($this->isSol($i)) {
+					$this->removeEmptyLine($i);
 				}
 			}
 		}
@@ -1677,30 +1603,23 @@ trait UtilityTrait
 	 * Calcola l'indentazione di $ptr e la confronta
 	 * con quella attesa data da $indentation e $additionalTabs
 	 *
-	 * @param  File     $phpcsFile
 	 * @param  int|null $ptr
 	 * @param  integer  $indentation
 	 * @param  integer  $additionalTabs
 	 * @return null
 	 */
-	public function checkIndentation(
-		File $phpcsFile,
-		$ptr = null,
-		$indentation = 0,
-		$additionalTabs = 0
-	) {
-		if ($this->isScol($phpcsFile, $ptr) && $indentation >= 0) {
-			$tabW    = $this->getTabWidth($phpcsFile);
+	public function checkIndentation($ptr = null, $indentation = 0, $additionalTabs = 0)
+	{
+		if ($this->isScol($ptr) && $indentation >= 0) {
+			$tabW    = $this->getTabWidth();
 			$aSpaces = $additionalTabs * $tabW;
-			$iPtr    = $this->getWhitespaces($phpcsFile, $ptr);
+			$iPtr    = $this->getWhitespaces($ptr);
 			if ($iPtr !== ($indentation + $aSpaces)) {
-				$tokens = $phpcsFile->getTokens();
-
-				$fix = $phpcsFile->addFixableError(
+				$fix = $this->file->addFixableError(
 					"\"%s\" is not indented correctly",
 					$ptr,
 					"IncorrectIndentation",
-					array($tokens[$ptr]["content"])
+					array($this->tokens[$ptr]["content"])
 				);
 
 				if ($fix === true) {
@@ -1709,16 +1628,16 @@ trait UtilityTrait
 
 					$string = str_repeat("\t", $tabs) . str_repeat(" ", $spaces);
 
-					$sol = $this->findSol($phpcsFile, $ptr);
-					$phpcsFile->fixer->beginChangeset();
+					$sol = $this->findSol($ptr);
+					$this->fixer->beginChangeset();
 					if ($ptr > $sol) {
 						for ($i = $sol; $i < $ptr; $i++) {
-							$phpcsFile->fixer->replaceToken($i, "");
+							$this->fixer->replaceToken($i, "");
 						}
 					}
 
-					$phpcsFile->fixer->addContentBefore($ptr, $string);
-					$phpcsFile->fixer->endChangeset();
+					$this->fixer->addContentBefore($ptr, $string);
+					$this->fixer->endChangeset();
 				}
 			}
 		}

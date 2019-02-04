@@ -14,71 +14,72 @@ namespace MyPSR\Sniffs\PHP;
  */
 class DisallowShortOpenTagSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
-    use \MyPSR\Sniffs\UtilityTrait;
+	use \MyPSR\Sniffs\UtilityTrait;
 
-    public function register()
-    {
-        return array(
-            T_OPEN_TAG,
-            T_INLINE_HTML
-        );
-    }
+	public function register()
+	{
+		return array(
+			T_OPEN_TAG,
+			T_INLINE_HTML
+		);
+	}
 
-    public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
-    {
-        $tokens  = $phpcsFile->getTokens();
-        $content = $tokens[$stackPtr]["content"];
+	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
+	{
+		$this->setFile($phpcsFile);
 
-        if (strpos($content, "<?") === false) {
-            return;
-        }
+		$content = $this->tokens[$stackPtr]["content"];
 
-        $pos = strpos($content, "<?");
+		if (strpos($content, "<?") === false) {
+			return;
+		}
 
-        $echo = false;
-        if (
-            substr($content, $pos, 7) === "<? echo"
-            || substr($content, $pos, 6) === "<?echo"
-        ) {
-            $echo = true;
-        }
+		$pos = strpos($content, "<?");
 
-        $opening = false;
-        if (
-            empty($echo)
-            && substr($content, $pos, 3) !== "<?="
-            && substr($content, $pos, 5) !== "<?php"
-            && substr($content, $pos, 2) === "<?"
-        ) {
-            $opening = true;
-        }
+		$echo = false;
+		if (
+			substr($content, $pos, 7) === "<? echo"
+			|| substr($content, $pos, 6) === "<?echo"
+		) {
+			$echo = true;
+		}
 
-        if ($echo || $opening) {
-            $error = "Short PHP opening tag used; expected \"<?php\" or \"<?=\" but found \"%s\"";
-            $data  = array($content);
-            $fix   = $phpcsFile->addFixableError($error, $stackPtr, "Found", $data);
-            if ($fix === true) {
-                if ($echo) {
-                    if (strpos($content, "<? echo") !== false) {
-                        $newContent = str_replace("<? echo", "<?=", $content);
-                    } elseif (strpos($content, "<?echo") !== false) {
-                        $newContent = str_replace("<?echo", "<?=", $content);
-                    }
-                } elseif ($opening) {
-                    $thirdChar = substr($content, $pos + 2, 1);
-                    if (!in_array($thirdChar, array(" ", "\t", "\n"))) {
-                        $newContent = str_replace("<?", "<?php ", $content);
-                    } else {
-                        $newContent = str_replace("<?", "<?php", $content);
-                    }
-                }
+		$opening = false;
+		if (
+			empty($echo)
+			&& substr($content, $pos, 3) !== "<?="
+			&& substr($content, $pos, 5) !== "<?php"
+			&& substr($content, $pos, 2) === "<?"
+		) {
+			$opening = true;
+		}
 
-                $phpcsFile->fixer->replaceToken($stackPtr, $newContent);
-            }
+		if ($echo || $opening) {
+			$error = "Short PHP opening tag used; expected \"<?php\" or \"<?=\" but found \"%s\"";
+			$data  = array($content);
+			$fix   = $this->file->addFixableError($error, $stackPtr, "Found", $data);
+			if ($fix === true) {
+				if ($echo) {
+					if (strpos($content, "<? echo") !== false) {
+						$newContent = str_replace("<? echo", "<?=", $content);
+					} elseif (strpos($content, "<?echo") !== false) {
+						$newContent = str_replace("<?echo", "<?=", $content);
+					}
+				} elseif ($opening) {
+					$thirdChar = substr($content, $pos + 2, 1);
+					if (!in_array($thirdChar, array(" ", "\t", "\n"))) {
+						$newContent = str_replace("<?", "<?php ", $content);
+					} else {
+						$newContent = str_replace("<?", "<?php", $content);
+					}
+				}
 
-            $phpcsFile->recordMetric($stackPtr, "PHP short open tag used", "yes");
-        } else {
-            $phpcsFile->recordMetric($stackPtr, "PHP short open tag used", "no");
-        }
-    }
+				$this->fixer->replaceToken($stackPtr, $newContent);
+			}
+
+			$this->file->recordMetric($stackPtr, "PHP short open tag used", "yes");
+		} else {
+			$this->file->recordMetric($stackPtr, "PHP short open tag used", "no");
+		}
+	}
 }

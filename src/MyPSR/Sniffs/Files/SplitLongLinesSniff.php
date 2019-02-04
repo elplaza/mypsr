@@ -9,219 +9,217 @@ use PHP_CodeSniffer\Files\File;
  */
 class SplitLongLinesSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 {
-    use \MyPSR\Sniffs\UtilityTrait;
+	use \MyPSR\Sniffs\UtilityTrait;
 
-    public $maxLineLength = 100;
+	public $maxLineLength = 100;
 
-    public function register()
-    {
-        return array(T_OPEN_TAG);
-    }
+	public function register()
+	{
+		return array(T_OPEN_TAG);
+	}
 
-    public function process(File $phpcsFile, $stackPtr)
-    {
-        // processo tutti i token da $stackPtr in poi
-        for ($i = $stackPtr; $i < $phpcsFile->numTokens; $i++) {
-            // considero riga per riga
-            if ($this->isSol($phpcsFile, $i)) {
-                // se la riga è più lunga del massimo
-                // consentito provo a splittarla
-                $length = $this->getLineLength($phpcsFile, $i);
-                if ($length > $this->maxLineLength) {
-                    $this->splitLine($phpcsFile, $i);
-                }
-            }
-        }
-    }
+	public function process(File $phpcsFile, $stackPtr)
+	{
+		$this->setFile($phpcsFile);
 
-    protected function splitLine(File $phpcsFile, $ptr)
-    {
-        $sol = $this->findSol($phpcsFile, $ptr);
-        $eol = $this->findEol($phpcsFile, $ptr);
+		// processo tutti i token da $stackPtr in poi
+		for ($i = $stackPtr; $i < $this->file->numTokens; $i++) {
+			// considero riga per riga
+			if ($this->isSol($i)) {
+				// se la riga è più lunga del massimo
+				// consentito provo a splittarla
+				$length = $this->getLineLength($i);
+				if ($length > $this->maxLineLength) {
+					$this->splitLine($i);
+				}
+			}
+		}
+	}
 
-        if (is_null($sol) || is_null($eol)) {
-            return;
-        }
+	protected function splitLine($ptr)
+	{
+		$sol = $this->findSol($ptr);
+		$eol = $this->findEol($ptr);
 
-        // sostituisce la riga composta solo da whitespaces con l'eolChar
-        $onlyWhitespace = $this->replaceWhitespaceLine($phpcsFile, $sol, $eol);
+		if (is_null($sol) || is_null($eol)) {
+			return;
+		}
 
-        if (empty($onlyWhitespace)) {
-            // "splitta" le righe composte solo da commenti (ed eventualmente spazi)
-            $commentLine = $this->splitCommentLine($phpcsFile, $sol, $eol);
-            if (empty($commentLine)) {
-                // "splitta" le righe con del codice dentro
-                $ecol = $this->findEcol($phpcsFile, $eol);
-                if ($this->isValid($phpcsFile, $ecol)) {
-                    $phpcsFile->addError(
-                        "This line is greater than {$this->maxLineLength} chars.",
-                        $ecol,
-                        "SplitCodeLine"
-                    );
-                }
-            }
-        }
-    }
+		// sostituisce la riga composta solo da whitespaces con l'eolChar
+		$onlyWhitespace = $this->replaceWhitespaceLine($sol, $eol);
 
-    /**
-     * Splitta le righe composte solo da commenti
-     * ed eventualmente da whitespaces
-     * @param  File $phpcsFile
-     * @param  int  $sol start-of-line
-     * @param  int  $eol end-of-line
-     * @return void
-     */
-    protected function splitCommentLine(File $phpcsFile, $sol, $eol)
-    {
-        $tokens = $phpcsFile->getTokens();
+		if (empty($onlyWhitespace)) {
+			// "splitta" le righe composte solo da commenti (ed eventualmente spazi)
+			$commentLine = $this->splitCommentLine($sol, $eol);
+			if (empty($commentLine)) {
+				// "splitta" le righe con del codice dentro
+				$ecol = $this->findEcol($eol);
+				if ($this->isValid($ecol)) {
+					$this->file->addError(
+						"This line is greater than {$this->maxLineLength} chars.",
+						$ecol,
+						"SplitCodeLine"
+					);
+				}
+			}
+		}
+	}
 
-        if ($this->isSameLine($phpcsFile, $sol, $eol)) {
-            // se la riga contiene codice allora esco
-            $ecol = $this->findEcol($phpcsFile, $sol, $eol);
-            if (!is_null($ecol) && $this->isSameLine($phpcsFile, $ecol, $eol)) {
-                return false;
-            }
+	/**
+	 * Splitta le righe composte solo da commenti
+	 * ed eventualmente da whitespaces
+	 * @param  int  $sol start-of-line
+	 * @param  int  $eol end-of-line
+	 * @return void
+	 */
+	protected function splitCommentLine($sol, $eol)
+	{
+		if ($this->isSameLine($sol, $eol)) {
+			// se la riga contiene codice allora esco
+			$ecol = $this->findEcol($sol, $eol);
+			if (!is_null($ecol) && $this->isSameLine($ecol, $eol)) {
+				return false;
+			}
 
-            $lastComment = $this->prevComment($phpcsFile, $eol, $sol);
-            if (
-                $this->isComment($phpcsFile, $lastComment)
-                && $this->isSameLine($phpcsFile, $lastComment, $eol)
-            ) {
-                if ($this->isComment($phpcsFile, $lastComment, "oneline")) {
-                    $lcu = $this->getUnits($phpcsFile, $lastComment);
-                    if ($lcu >= ($this->maxLineLength - 2)) {
-                        $fix = $phpcsFile->addFixableError(
-                            "This line is greater than {$this->maxLineLength} chars. "
-                            . "Move the comment in new line",
-                            $sol,
-                            "SplitCommentLine"
-                        );
-                        if ($fix === true) {
-                            $phpcsFile->fixer->beginChangeset();
-                            $phpcsFile->fixer->addNewlineBefore($lastComment);
-                            $phpcsFile->fixer->endChangeset();
-                        }
-                    } else {
-                        $commentMaxLength = $this->maxLineLength - $lcu - 2;
-                        $fix = $phpcsFile->addFixableError(
-                            "This line is greater than {$this->maxLineLength} chars. "
-                            . "Split the comment in more lines",
-                            $sol,
-                            "SplitCommentLine"
-                        );
+			$lastComment = $this->prevComment($eol, $sol);
+			if (
+				$this->isComment($lastComment)
+				&& $this->isSameLine($lastComment, $eol)
+			) {
+				if ($this->isComment($lastComment, "oneline")) {
+					$lcu = $this->getUnits($lastComment);
+					if ($lcu >= ($this->maxLineLength - 2)) {
+						$fix = $this->file->addFixableError(
+							"This line is greater than {$this->maxLineLength} chars. "
+							. "Move the comment in new line",
+							$sol,
+							"SplitCommentLine"
+						);
+						if ($fix === true) {
+							$this->fixer->beginChangeset();
+							$this->fixer->addNewlineBefore($lastComment);
+							$this->fixer->endChangeset();
+						}
+					} else {
+						$commentMaxLength = $this->maxLineLength - $lcu - 2;
+						$fix = $this->file->addFixableError(
+							"This line is greater than {$this->maxLineLength} chars. "
+							. "Split the comment in more lines",
+							$sol,
+							"SplitCommentLine"
+						);
 
-                        if ($fix === true) {
-                            $content    = $tokens[$lastComment]["content"];
-                            $firstChars = substr($content, 0, 2);
-                            if ($firstChars[0] == "#") {
-                                $symbol = "# ";
-                            } elseif ($firstChars == "//") {
-                                $symbol = "//";
-                            } elseif ($firstChars == "/*") {
-                                $symbol = "  ";
-                            } else {
-                                $symbol = "";
-                            }
+						if ($fix === true) {
+							$content    = $this->tokens[$lastComment]["content"];
+							$firstChars = substr($content, 0, 2);
+							if ($firstChars[0] == "#") {
+								$symbol = "# ";
+							} elseif ($firstChars == "//") {
+								$symbol = "//";
+							} elseif ($firstChars == "/*") {
+								$symbol = "  ";
+							} else {
+								$symbol = "";
+							}
 
-                            $contentB      = str_replace("\t", str_repeat(" ", $this->getTabWidth($phpcsFile)), $content);
-                            $contentA      = ltrim($contentB);
-                            $spaces        = strlen($contentB) - strlen($contentA);
-                            $length        = $tokens[$lastComment]["column"] - 1 + $spaces;
-                            $tabs          = intval($length / $this->getTabWidth($phpcsFile));
-                            $newLength     = $length - $tabs * ($this->getTabWidth($phpcsFile) - 1);
-                            $beforeContent = str_pad(str_repeat("\t", $tabs), $newLength);
+							$contentB      = str_replace("\t", str_repeat(" ", $this->getTabWidth()), $content);
+							$contentA      = ltrim($contentB);
+							$spaces        = strlen($contentB) - strlen($contentA);
+							$length        = $this->tokens[$lastComment]["column"] - 1 + $spaces;
+							$tabs          = intval($length / $this->getTabWidth());
+							$newLength     = $length - $tabs * ($this->getTabWidth() - 1);
+							$beforeContent = str_pad(str_repeat("\t", $tabs), $newLength);
 
-                            $newContent = wordwrap(
-                                $tokens[$lastComment]["content"],
-                                $commentMaxLength,
-                                $phpcsFile->eolChar . $beforeContent . $symbol,
-                                true
-                            );
+							$newContent = wordwrap(
+								$this->tokens[$lastComment]["content"],
+								$commentMaxLength,
+								$this->file->eolChar . $beforeContent . $symbol,
+								true
+							);
 
-                            $phpcsFile->fixer->beginChangeset();
-                            $phpcsFile->fixer->replaceToken($lastComment, $newContent);
-                            $phpcsFile->fixer->endChangeset();
-                        }
-                    }
+							$this->fixer->beginChangeset();
+							$this->fixer->replaceToken($lastComment, $newContent);
+							$this->fixer->endChangeset();
+						}
+					}
 
-                    return true;
-                } elseif ($this->isComment($phpcsFile, $lastComment, "multiline")) {
-                    $fix = $phpcsFile->addFixableError(
-                        "This line is greater than {$this->maxLineLength} chars. "
-                        . "Split the comment in more lines",
-                        $sol,
-                        "SplitCommentLine"
-                    );
-                    if ($fix === true) {
-                        $string        = $phpcsFile->findPrevious(array(T_DOC_COMMENT_STRING), $lastComment, $sol);
-                        $starComment   = $phpcsFile->findPrevious(array(T_DOC_COMMENT_OPEN_TAG), $string);
-                        $length        = $tokens[$starComment]["column"];
-                        $tabs          = intval($length / $this->getTabWidth($phpcsFile));
-                        $newLength     = $length - $tabs * ($this->getTabWidth($phpcsFile) - 1);
-                        $indentation   = str_pad(str_repeat("\t", $tabs), $newLength);
-                        $untilStar     = $indentation . "*";
-                        $toFill        = $tokens[$string]["column"] - $length - 2;
-                        $beforeContent = $untilStar . str_repeat(" ", $toFill);
+					return true;
+				} elseif ($this->isComment($lastComment, "multiline")) {
+					$fix = $this->file->addFixableError(
+						"This line is greater than {$this->maxLineLength} chars. "
+						. "Split the comment in more lines",
+						$sol,
+						"SplitCommentLine"
+					);
+					if ($fix === true) {
+						$string        = $this->file->findPrevious(array(T_DOC_COMMENT_STRING), $lastComment, $sol);
+						$starComment   = $this->file->findPrevious(array(T_DOC_COMMENT_OPEN_TAG), $string);
+						$length        = $this->tokens[$starComment]["column"];
+						$tabs          = intval($length / $this->getTabWidth());
+						$newLength     = $length - $tabs * ($this->getTabWidth() - 1);
+						$indentation   = str_pad(str_repeat("\t", $tabs), $newLength);
+						$untilStar     = $indentation . "*";
+						$toFill        = $this->tokens[$string]["column"] - $length - 2;
+						$beforeContent = $untilStar . str_repeat(" ", $toFill);
 
-                        $commentMaxLength = $this->maxLineLength - $tokens[$string]["column"] - 3;
+						$commentMaxLength = $this->maxLineLength - $this->tokens[$string]["column"] - 3;
 
-                        $newContent = wordwrap(
-                            $tokens[$string]["content"],
-                            $commentMaxLength,
-                            $phpcsFile->eolChar . $beforeContent,
-                            true
-                        );
+						$newContent = wordwrap(
+							$this->tokens[$string]["content"],
+							$commentMaxLength,
+							$this->file->eolChar . $beforeContent,
+							true
+						);
 
-                        $phpcsFile->fixer->beginChangeset();
-                        $phpcsFile->fixer->replaceToken($string, $newContent);
-                        $phpcsFile->fixer->endChangeset();
-                    }
+						$this->fixer->beginChangeset();
+						$this->fixer->replaceToken($string, $newContent);
+						$this->fixer->endChangeset();
+					}
 
-                    return true;
-                }
-            }
-        }
+					return true;
+				}
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    /**
-     * Sostituisce le righe composte solo da spazi con l'eolChar
-     * @param  File $phpcsFile
-     * @param  int  $sol start-of-line
-     * @param  int  $eol end-of-line
-     * @return void
-     */
-    protected function replaceWhitespaceLine(File $phpcsFile, $sol, $eol)
-    {
-        $onlyWhitespace = false;
-        if ($this->isSameLine($phpcsFile, $sol, $eol)) {
-            $onlyWhitespace = true;
-            for ($i = $sol; $i <= $eol; $i++) {
-                if (!$this->isWhitespace($phpcsFile, $i)) {
-                    $onlyWhitespace = false;
-                }
-            }
+	/**
+	 * Sostituisce le righe composte solo da spazi con l'eolChar
+	 * @param  int  $sol start-of-line
+	 * @param  int  $eol end-of-line
+	 * @return void
+	 */
+	protected function replaceWhitespaceLine($sol, $eol)
+	{
+		$onlyWhitespace = false;
+		if ($this->isSameLine($sol, $eol)) {
+			$onlyWhitespace = true;
+			for ($i = $sol; $i <= $eol; $i++) {
+				if (!$this->isWhitespace($i)) {
+					$onlyWhitespace = false;
+				}
+			}
 
-            if ($onlyWhitespace) {
-                $fix = $phpcsFile->addFixableError(
-                    "This line is greater than {$this->maxLineLength} chars. "
-                    . "It's composed only by whitespaces",
-                    $sol,
-                    "SplitWhitespaceLine"
-                );
-                if ($fix === true) {
-                    $phpcsFile->fixer->beginChangeset();
-                    for ($i = $sol; $i <= $eol; $i++) {
-                        $phpcsFile->fixer->replaceToken($i, "");
-                    }
-                    $phpcsFile->fixer->addNewline($sol - 1);
-                    $phpcsFile->fixer->endChangeset();
-                }
-            }
-        }
+			if ($onlyWhitespace) {
+				$fix = $this->file->addFixableError(
+					"This line is greater than {$this->maxLineLength} chars. "
+					. "It's composed only by whitespaces",
+					$sol,
+					"SplitWhitespaceLine"
+				);
+				if ($fix === true) {
+					$this->fixer->beginChangeset();
+					for ($i = $sol; $i <= $eol; $i++) {
+						$this->fixer->replaceToken($i, "");
+					}
+					$this->fixer->addNewline($sol - 1);
+					$this->fixer->endChangeset();
+				}
+			}
+		}
 
-        return $onlyWhitespace;
-    }
+		return $onlyWhitespace;
+	}
 
 }

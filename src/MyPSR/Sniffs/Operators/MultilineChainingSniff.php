@@ -16,13 +16,20 @@ class MultilineChainingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
-		$soc = $this->chainingStart($phpcsFile, $stackPtr);
-		$eoc = $this->chainingEnd($phpcsFile, $stackPtr);
+		$this->setFile($phpcsFile);
+
+		$soc = $this->chainingStart($stackPtr);
+		$eoc = $this->chainingEnd($stackPtr);
 		if (
-			$this->areValid($phpcsFile, array($soc, $eoc))
-			&& !$this->isSameLine($phpcsFile, $soc, $eoc)
+			$this->areValid(array($soc, $eoc))
+			&& !$this->isSameLine($soc, $eoc)
 		) {
-			$this->startCodeOfLine($phpcsFile, $stackPtr);
+			if ($this->isInArray($stackPtr)) {
+				$this->noWhitespaceBefore($stackPtr);
+			} else {
+				$this->startCodeOfLine($stackPtr);
+			}
 		}
 	}
+
 }

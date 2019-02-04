@@ -20,6 +20,8 @@ class NamingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
     public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
     {
-        $this->toLowercase($phpcsFile, $stackPtr);
+        $this->setFile($phpcsFile);
+
+        $this->toLowercase($stackPtr);
     }
 }

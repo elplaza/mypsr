@@ -19,16 +19,16 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
-		$tokens = $phpcsFile->getTokens();
+		$this->setFile($phpcsFile);
 
 		// controllo che l'indentazione del token T_OPEN_TAG sia 0
 		// così fissiamo il punto di riferimento per tutti i token
 		// successivi
-		$iOpenTag = $this->getUnits($phpcsFile, $stackPtr);
+		$iOpenTag = $this->getUnits($stackPtr);
 		if ($iOpenTag !== 0) {
-			$content = $tokens[$stackPtr]["content"];
+			$content = $this->tokens[$stackPtr]["content"];
 
-			$fix = $phpcsFile->addFixableError(
+			$fix = $this->file->addFixableError(
 				"\"%s\" is not indented correctly",
 				$stackPtr,
 				"IncorrectIndentation",
@@ -36,108 +36,96 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 			);
 
 			if ($fix === true) {
-				$phpcsFile->fixer->beginChangeset();
+				$this->fixer->beginChangeset();
 				if ($stackPtr === 0) {
-					$phpcsFile->fixer->replaceToken($stackPtr, ltrim($content));
+					$this->fixer->replaceToken($stackPtr, ltrim($content));
 				} else {
 					for ($i = 0; $i < $stackPtr; $i++) {
-						$phpcsFile->fixer->replaceToken($i, "");
+						$this->fixer->replaceToken($i, "");
 					}
 				}
 
-				$phpcsFile->fixer->endChangeset();
+				$this->fixer->endChangeset();
 			}
 		}
 
 		// parso tutti i start-code-of-line e:
 		// @todo qui me ne frego dei commenti, ma sarebbe da
 		//       estendere anche ai commenti
-		$output = array();
-		for ($i = $stackPtr + 1; $i < $phpcsFile->numTokens; $i++) {
-			if ($this->isScol($phpcsFile, $i)) {
-				$iIndentation = $this->getWhitespaces($phpcsFile, $i);
-
+		for ($i = $stackPtr + 1; $i < $this->file->numTokens; $i++) {
+			if ($this->isScol($i)) {
 				// l'indentazione del token $i di base sarà
 				// quella del prev-start-code-of-line (PSCOL).
-				$prevScol = $this->prevScol($phpcsFile, $i);
-				$iPscol   = $this->getWhitespaces($phpcsFile, $prevScol);
+				$prevScol = $this->prevScol($i);
+				$iPscol   = $this->getWhitespaces($prevScol);
 
-				$prevEcol = $this->prevEcol($phpcsFile, $i);
+				$prevEcol = $this->prevEcol($i);
 
 				// può cambiare in casi specifici:
-				if ($this->isCloseBracket($phpcsFile, $i)) {
+				if ($this->isCloseBracket($i)) {
 					// se è una parentesi di chiusura multiline, la indento
 					// con la stessa indentazione della parentesi di apertura
-					$opener  = $this->getOpener($phpcsFile, $i);
-					$iOpener = $this->getWhitespaces($phpcsFile, $opener);
+					$opener  = $this->getOpener($i);
+					$iOpener = $this->getWhitespaces($opener);
 
-					$this->checkIndentation($phpcsFile, $i, $iOpener);
-
-				} elseif ($this->isSwitchKeyword($phpcsFile, $i)) {
+					$this->checkIndentation($i, $iOpener);
+				} elseif ($this->isSwitchKeyword($i)) {
 					// se è un "case" o un "default", lo indento
 					// di 1 tab rispetto allo switch
-					$switch = $phpcsFile->findPrevious(array(T_SWITCH), $i - 1);
+					$switch = $this->file->findPrevious(array(T_SWITCH), $i - 1);
 					if ($switch !== false) {
-						$iSwitch = $this->getWhitespaces($phpcsFile, $switch);
-						$this->checkIndentation($phpcsFile, $i, $iSwitch, 1);
+						$iSwitch = $this->getWhitespaces($switch);
+						$this->checkIndentation($i, $iSwitch, 1);
 					}
-				} elseif (
-					$this->isOperator($phpcsFile, $i)
-					&& !$this->isOperator($phpcsFile, $prevScol)
-				) {
+				} elseif ($this->isOperator($i) && !$this->isOperator($prevScol)) {
 					// se è un operatore e il PSCOL non lo è,
 					// allora lo indento di 1 tab in più
-					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
-				} elseif (
-					$this->isBooleanOperator($phpcsFile, $i)
-					&& !$this->isBooleanOperator($phpcsFile, $prevScol)
-				) {
+					$this->checkIndentation($i, $iPscol, 1);
+				} elseif ($this->isBooleanOperator($i) && !$this->isBooleanOperator($prevScol)) {
 					// se è un operatore booleano e il PSCOL non lo è,
 					// allora lo indento di 1 tab in più
-					$this->checkIndentation($phpcsFile, $i, $iPscol);
+					$this->checkIndentation($i, $iPscol);
 				} elseif (
-					$this->isObjectOperator($phpcsFile, $i)
-					&& $this->isFirstChaining($phpcsFile, $i)
+					$this->isObjectOperator($i)
+					&& $this->isFirstChaining($i)
+					&& !$this->isInArray($i)
 				) {
 					// se è il primo operatore di chaining
 					// allora lo indento di 1 tab in più
-					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
+					$this->checkIndentation($i, $iPscol, 1);
 				} elseif (
-					$this->isConcatOperator($phpcsFile, $i)
-					&& !$this->isConcatOperator($phpcsFile, $prevScol)
-					&& !$this->isString($phpcsFile, $prevScol)
+					$this->isConcatOperator($i)
+					&& !$this->isConcatOperator($prevScol)
+					&& !$this->isString($prevScol)
 				) {
 					// se è un operatore di concatenazione di stringa
 					// e il PSCOL non lo è, allora lo indento di 1 tab in più
-					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
-				} elseif ($this->isTernary($phpcsFile, $i)) {
+					$this->checkIndentation($i, $iPscol, 1);
+				} elseif ($this->isTernary($i)) {
 					// se è l'operatore ternario
-					$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
-				} elseif ($this->isSemicolon($phpcsFile, $i)) {
+					$this->checkIndentation($i, $iPscol, 1);
+				} elseif ($this->isSemicolon($i)) {
 					// se è un ";" devo andarmi a prendere lo start-of-statement
 					// e indentarla come il SCOL dello SOS
-					$sos = $phpcsFile->findStartOfStatement($i - 1);
-					if (!empty($sos) && !$this->isNoCode($phpcsFile, $sos)) {
-						$sosScol = $this->findScol($phpcsFile, $sos);
+					$sos = $this->file->findStartOfStatement($i - 1);
+					if (!empty($sos) && !$this->isNoCode($sos)) {
+						$sosScol = $this->findScol($sos);
 						if (!is_null($sosScol)) {
-							$iSosScol = $this->getWhitespaces($phpcsFile, $sosScol);
-							$this->checkIndentation($phpcsFile, $i, $iSosScol);
+							$iSosScol = $this->getWhitespaces($sosScol);
+							$this->checkIndentation($i, $iSosScol);
 						}
 					}
 				} else {
 					// se non è uno dei casi precedenti, allora:
 					// prendo il PECOL: prev-end-code-of-line
-					if (
-						$this->isBlockOpener($phpcsFile, $prevEcol)
-						|| $this->isColon($phpcsFile, $prevEcol)
-					) {
+					if ($this->isBlockOpener($prevEcol) || $this->isColon($prevEcol)) {
 						// se il PECOL è una parentesi di apertura multiline
 						// o un ":" allora indento IPSCOL + 1tab
-						$this->checkIndentation($phpcsFile, $i, $iPscol, 1);
+						$this->checkIndentation($i, $iPscol, 1);
 					} else {
 						// in tutti gli altri casi l'indentazione
 						// è quella del PSCOL
-						$this->checkIndentation($phpcsFile, $i, $iPscol);
+						$this->checkIndentation($i, $iPscol);
 					}
 				}
 			}

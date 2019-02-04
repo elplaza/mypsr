@@ -20,13 +20,13 @@ class MultilineSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
-        $sos = $phpcsFile->findStartOfStatement($stackPtr);
-        $eos = $phpcsFile->findEndOfStatement($stackPtr);
-        if (
-            $this->areValid($phpcsFile, array($sos, $eos))
-            && !$this->isSameLine($phpcsFile, $sos, $eos)
-        ) {
-            $this->startCodeOfLine($phpcsFile, $stackPtr);
-        }
+		$this->setFile($phpcsFile);
+
+		$sos = $this->file->findStartOfStatement($stackPtr);
+		$eos = $this->file->findEndOfStatement($stackPtr);
+		if ($this->areValid(array($sos, $eos)) && !$this->isSameLine($sos, $eos)) {
+			$this->startCodeOfLine($stackPtr);
+		}
 	}
+
 }

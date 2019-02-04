@@ -18,41 +18,42 @@ class TernarySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(File $phpcsFile, $stackPtr)
 	{
-		$start = $phpcsFile->findStartOfStatement($stackPtr);
-		$end   = $phpcsFile->findEndOfStatement($stackPtr);
-		$else  = $this->findTernaryElse($phpcsFile, $stackPtr);
+		$this->setFile($phpcsFile);
 
-		if ($this->isSameLine($phpcsFile, $start, $end)) {
-			$this->oneSpaceAround($phpcsFile, $stackPtr);
-			$this->oneSpaceAround($phpcsFile, $else);
+		$start = $this->file->findStartOfStatement($stackPtr);
+		$end   = $this->file->findEndOfStatement($stackPtr);
+		$else  = $this->findTernaryElse($stackPtr);
+
+		if ($this->isSameLine($start, $end)) {
+			$this->oneSpaceAround($stackPtr);
+			$this->oneSpaceAround($else);
 		} else {
-			$this->startCodeOfLine($phpcsFile, $stackPtr);
-			$this->startCodeOfLine($phpcsFile, $else);
+			$this->startCodeOfLine($stackPtr);
+			$this->startCodeOfLine($else);
 
-			$this->oneSpaceAfter($phpcsFile, $stackPtr);
-			$this->oneSpaceAfter($phpcsFile, $else);
+			$this->oneSpaceAfter($stackPtr);
+			$this->oneSpaceAfter($else);
 
-			$this->removeEmptyLines($phpcsFile, $start, $end);
+			$this->removeEmptyLines($start, $end);
 		}
 	}
 
-	private function findTernaryElse(File $phpcsFile, $stackPtr)
+	private function findTernaryElse($stackPtr)
 	{
-		$tokens = $phpcsFile->getTokens();
-
 		$start  = $stackPtr + 1;
-		$eos    = $phpcsFile->findEndOfStatement($stackPtr);
+		$eos    = $this->file->findEndOfStatement($stackPtr);
 		do {
-			$code = $this->nextCode($phpcsFile, $start, $eos);
+			$code = $this->nextCode($start, $eos);
 			if (!empty($code)) {
-				if ($tokens[$code]["code"] === T_OPEN_PARENTHESIS) {
-					$start = $tokens[$code]["parenthesis_closer"] + 1;
+				if ($this->tokens[$code]["code"] === T_OPEN_PARENTHESIS) {
+					$start = $this->tokens[$code]["parenthesis_closer"] + 1;
 				} else {
 					$start = $code + 1;
 				}
 			}
-		} while (!empty($code) && $tokens[$code]["code"] !== T_INLINE_ELSE);
+		} while (!empty($code) && $this->tokens[$code]["code"] !== T_INLINE_ELSE);
 
 		return ($code <= $eos) ? $code : $eos;
 	}
+
 }

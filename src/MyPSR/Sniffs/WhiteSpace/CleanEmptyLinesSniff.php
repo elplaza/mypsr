@@ -16,9 +16,11 @@ class CleanEmptyLinesSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
-		$closer = $this->getCloser($phpcsFile, $stackPtr);
+		$this->setFile($phpcsFile);
+
+		$closer = $this->getCloser($stackPtr);
 		if (!is_null($closer)) {
-			$this->removeEmptyLines($phpcsFile, $stackPtr, $closer);
+			$this->removeEmptyLines($stackPtr, $closer);
 		}
 	}
 

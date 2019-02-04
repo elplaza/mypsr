@@ -23,6 +23,6 @@
         "friendsofphp/php-cs-fixer": "@stable"
     },
     "require-dev": {
-        "phpunit/phpunit" : "@stable"
+        "phpunit/phpunit" : "7.5.3"
     }
 }

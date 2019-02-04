@@ -17,10 +17,12 @@ class NamingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
     public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
     {
+        $this->setFile($phpcsFile);
+
         // la keyword Array dovrebbe essere in minuscolo.
-        $this->toLowercase($phpcsFile, $stackPtr);
+        $this->toLowercase($stackPtr);
 
         // la parentesi di apertura dovrebbe stare subito dopo la keyword array
-        $this->noWhitespaceAfter($phpcsFile, $stackPtr);
+        $this->noWhitespaceAfter($stackPtr);
     }
 }

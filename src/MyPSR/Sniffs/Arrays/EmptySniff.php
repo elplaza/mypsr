@@ -17,24 +17,27 @@ class EmptySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 
 	public function process(\PHP_CodeSniffer\Files\File $phpcsFile, $stackPtr)
 	{
+		$this->setFile($phpcsFile);
+
 		// parentesi di apertura e di chiusura dell'array
-		$open  = $this->getArrayOpenParenthesis($phpcsFile, $stackPtr);
-		$close = $this->getArrayCloseParenthesis($phpcsFile, $stackPtr);
+		$open  = $this->getArrayOpenParenthesis($stackPtr);
+		$close = $this->getArrayCloseParenthesis($stackPtr);
 
 		if (($open + 1) === $close) {
 			return;
 		}
 
-		if ($this->isEmptyArray($phpcsFile, $stackPtr)) {
+		if ($this->isEmptyArray($stackPtr)) {
 			$error = "Empty array must have close parenthesis after open parenthesis";
-			$fix   = $phpcsFile->addFixableError($error, $close, "EmptyArray");
+			$fix   = $this->file->addFixableError($error, $close, "EmptyArray");
 			if ($fix === true) {
-				$phpcsFile->fixer->beginChangeset();
+				$this->fixer->beginChangeset();
 				for ($i = ($open + 1); $i < $close; $i++) {
-					$phpcsFile->fixer->replaceToken($i, "");
+					$this->fixer->replaceToken($i, "");
 				}
-				$phpcsFile->fixer->endChangeset();
+				$this->fixer->endChangeset();
 			}
 		}
 	}
+
 }

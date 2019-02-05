@@ -24,7 +24,7 @@ class TernarySniff implements \PHP_CodeSniffer\Sniffs\Sniff
 		$end   = $this->file->findEndOfStatement($stackPtr);
 		$else  = $this->findTernaryElse($stackPtr);
 
-		if ($this->isSameLine($start, $end)) {
+		if ($this->isSameLine($start, $end) || $this->isInParenthesis($stackPtr)) {
 			$this->oneSpaceAround($stackPtr);
 			$this->oneSpaceAround($else);
 		} else {

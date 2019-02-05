@@ -49,11 +49,19 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 			}
 		}
 
+
 		// parso tutti i start-code-of-line e:
 		// @todo qui me ne frego dei commenti, ma sarebbe da
 		//       estendere anche ai commenti
 		for ($i = $stackPtr + 1; $i < $this->file->numTokens; $i++) {
 			if ($this->isScol($i)) {
+
+				if ($this->isInParenthesis($i)) {
+					if ($this->isObjectOperator($i) || $this->isTernary($i)) {
+						continue;
+					}
+				}
+
 				// l'indentazione del token $i di base sarà
 				// quella del prev-start-code-of-line (PSCOL).
 				$prevScol = $this->prevScol($i);
@@ -88,7 +96,7 @@ class IndentationSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 				} elseif (
 					$this->isObjectOperator($i)
 					&& $this->isFirstChaining($i)
-					&& !$this->isInArray($i)
+					&& !$this->isInParenthesis($i)
 				) {
 					// se è il primo operatore di chaining
 					// allora lo indento di 1 tab in più

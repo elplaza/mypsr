@@ -489,6 +489,17 @@ trait UtilityTrait
 	}
 
 	/**
+	 * E' una parentesi tonda aperta?
+	 *
+	 * @param  int     $ptr
+	 * @return boolean
+	 */
+	public function isParenthesis($ptr = null)
+	{
+		return $this->isType(array(T_OPEN_PARENTHESIS), $ptr);
+	}
+
+	/**
 	 * E' un token di chiusura blocco?
 	 *
 	 * @param  int|null $ptr
@@ -1305,15 +1316,15 @@ trait UtilityTrait
 	 * @param  int|null $ptr
 	 * @return boolean
 	 */
-	public function isInArray($ptr = null)
+	public function isInParenthesis($ptr = null)
 	{
-		if ($this->isObjectOperator($ptr)) {
+		if ($this->isValid($ptr)) {
 			if (isset($this->tokens[$ptr]["nested_parenthesis"])) {
 				$parenthesis = array_keys($this->tokens[$ptr]["nested_parenthesis"]);
 				$opener      = end($parenthesis);
-				if ($this->isBlockOpener($opener)) {
-					$prevCode = $this->prevCode($opener - 1);
-					if ($this->isArray($prevCode)) {
+				if ($this->isParenthesis($opener)) {
+					$closer = $this->getCloser($opener);
+					if ($ptr > $opener && $ptr < $closer) {
 						return true;
 					}
 				}

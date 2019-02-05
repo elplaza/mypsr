@@ -24,7 +24,7 @@ class MultilineChainingSniff implements \PHP_CodeSniffer\Sniffs\Sniff
 			$this->areValid(array($soc, $eoc))
 			&& !$this->isSameLine($soc, $eoc)
 		) {
-			if ($this->isInArray($stackPtr)) {
+			if ($this->isInParenthesis($stackPtr)) {
 				$this->noWhitespaceBefore($stackPtr);
 			} else {
 				$this->startCodeOfLine($stackPtr);
